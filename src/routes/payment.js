@@ -1,49 +1,134 @@
 const express = require('express');
 const router = express.Router();
 
-router.post('/create', async (req, res) => {
+// Örnek ödeme verileri (gerçek uygulamada database kullanın)
+const payment = new Map();
+
+// Ödeme oluştur
+router.post('/create', (req, res) => {
   try {
-    const { amount, user_email, description } = req.body;
-    
-    if (!amount || !user_email) {
+    const { amount, currency = 'TRY', description, customerInfo } = req.body;
+
+    // Validasyon
+    if (!amount || amount <= 0) {
       return res.status(400).json({
-        error: 'Amount ve user_email zorunlu'
+        success: false,
+        error: {
+          code: 'INVALID_AMOUNT',
+          message: 'Geçersiz tutar'
+        }
       });
     }
 
-    const response = {
-      status: 'success',
-      payment_url: 'https://sandbox-api.iyzipay.com/payment/mock_' + Date.now(),
-      payment_id: 'mock_' + Date.now(),
-      amount: amount,
-      user_email: user_email,
-      description: description || 'Ödeme işlemi'
+    // Ödeme ID oluştur
+    const paymentId = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    
+    // Ödeme verisi
+    const paymentData = {
+      id: paymentId,
+      amount,
+      currency,
+      description,
+      customerInfo,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    console.log('✅ Ödeme oluşturuldu:', response);
-    res.json(response);
-    
+    // Ödemeyi kaydet
+    payment.set(paymentId, paymentData);
+
+    console.log(`✅ Ödeme oluşturuldu: ${paymentId}`);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        paymentId,
+        status: 'pending',
+        createdAt: paymentData.createdAt
+      }
+    });
+
   } catch (error) {
-    console.error('❌ Ödeme hatası:', error);
-    res.status(500).json({ error: 'İç sunucu hatası' });
+    console.error('Ödeme oluşturma hatası:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PAYMENT_CREATION_FAILED',
+        message: 'Ödeme oluşturulamadı'
+      }
+    });
   }
 });
 
-router.get('/:id/status', async (req, res) => {
+// Ödeme durumu sorgula
+router.get('/:id/status', (req, res) => {
   try {
-    const paymentId = req.params.id;
-    
-    const statusResponse = {
-      payment_id: paymentId,
-      status: 'success',
-      amount: 100.00,
-      paid_at: new Date().toISOString()
-    };
+    const { id } = req.params;
+    const payment = payment.get(id);
 
-    res.json(statusResponse);
-    
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PAYMENT_NOT_FOUND',
+          message: 'Ödeme bulunamadı'
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        paymentId: payment.id,
+        status: payment.status,
+        amount: payment.amount,
+        currency: payment.currency,
+        createdAt: payment.createdAt,
+        updatedAt: payment.updatedAt
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ error: 'Status sorgulama hatası' });
+    console.error('Ödeme sorgulama hatası:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PAYMENT_QUERY_FAILED',
+        message: 'Ödeme durumu sorgulanamadı'
+      }
+    });
+  }
+});
+
+// Ödeme listesi (admin için)
+router.get('/', (req, res) => {
+  try {
+    const paymentList = Array.from(payment.values()).map(payment => ({
+      id: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status,
+      createdAt: payment.createdAt
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        payment: paymentList,
+        total: paymentList.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Ödeme listeleme hatası:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'PAYMENT_LIST_FAILED',
+        message: 'Ödemeler listelenemedi'
+      }
+    });
   }
 });
 

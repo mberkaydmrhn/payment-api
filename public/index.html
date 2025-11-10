@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaymentAPI - Bubble için Ödeme Çözümü</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #2563eb;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 180px 0 100px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Features Section */
+        .features {
+            background: white;
+            padding: 100px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #1f2937;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 2.5rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+            border: 1px solid #e2e8f0;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 0;
+            background: #f1f5f9;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            border: 3px solid #2563eb;
+            transform: scale(1.05);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2563eb;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin: 1rem 0;
+        }
+
+        .price-period {
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: #64748b;
+        }
+
+        /* API Demo Section */
+        .api-demo {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .code-block {
+            background: #1a1b26;
+            color: #c0caf5;
+            padding: 2rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Footer */
+        footer {
+            background: #1f2937;
+            color: white;
+            text-align: center;
+            padding: 3rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .pricing-card.popular {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">PaymentAPI</div>
+                <ul class="nav-links">
+                    <li><a href="#features">Özellikler</a></li>
+                    <li><a href="#pricing">Fiyatlandırma</a></li>
+                    <li><a href="#demo">API Demo</a></li>
+                    <li><a href="https://forum.bubble.io" target="_blank">Forum</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Bubble'da 5 Dakikada Ödeme Sistemi</h1>
+            <p>Iyzico entegrasyonu ile Türk Lirası ödeme almanın en kolay yolu. Kod yazmadan, sürükle-bırak ile ödeme sistemi kurun.</p>
+            <div class="cta-buttons">
+                <a href="#demo" class="btn btn-primary">API'yi Deneyin</a>
+                <a href="#pricing" class="btn btn-secondary">Fiyatları Görün</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Neden PaymentAPI?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Hızlı Entegrasyon</h3>
+                    <p>5 dakikada Bubble uygulamanıza ödeme sistemi ekleyin. Kod yazmaya gerek yok.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3>Türk Lirası Desteği</h3>
+                    <p>Iyzico ile yerel ödeme yöntemleri. Kredi kartı, banka kartı ve dijital cüzdanlar.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Güvenli</h3>
+                    <p>Bankalar seviyesinde güvenlik. SSL şifreleme ve PCI DSS uyumluluğu.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <h2 class="section-title">Fiyatlandırma</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <h3>Başlangıç</h3>
+                    <div class="price">%1<span class="price-period"> + Iyzico komisyonu</span></div>
+                    <ul class="pricing-features">
+                        <li>✓ 100 işlem/ay</li>
+                        <li>✓ 7/24 e-posta destek</li>
+                        <li>✓ Temel özellikler</li>
+                        <li>✓ Mock API erişimi</li>
+                    </ul>
+                    <a href="https://forum.bubble.io" class="btn btn-primary">Ücretsiz Başla</a>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="popular-badge">POPÜLER</div>
+                    <h3>Profesyonel</h3>
+                    <div class="price">%0.5<span class="price-period"> + Iyzico komisyonu</span></div>
+                    <ul class="pricing-features">
+                        <li>✓ 500 işlem/ay</li>
+                        <li>✓ Öncelikli destek</li>
+                        <li>✓ Gelişmiş raporlama</li>
+                        <li>✓ Gerçek Iyzico entegrasyonu</li>
+                        <li>✓ Özel API anahtarları</li>
+                    </ul>
+                    <a href="https://forum.bubble.io" class="btn btn-primary">Hemen Başla</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API Demo Section -->
+    <section id="demo" class="api-demo">
+        <div class="container">
+            <h2 class="section-title">API'yi Hemen Deneyin</h2>
+            <p style="text-align: center; margin-bottom: 2rem; font-size: 1.2rem;">Aşağıdaki komutları kopyalayıp terminalinizde deneyebilirsiniz:</p>
+            
+            <div class="code-block">
+                <pre><code># API'nin çalıştığını kontrol et
+curl https://payment-api-9g10.onrender.com/
+
+# Ödeme oluşturma örneği
+curl -X POST https://payment-api-9g10.onrender.com/api/payment/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 150.00,
+    "user_email": "test@example.com",
+    "description": "Test ödemesi"
+  }'
+
+# Ödeme durumu sorgulama
+curl https://payment-api-9g10.onrender.com/api/payment/mock_123456789/status</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 PaymentAPI. Tüm hakları saklıdır.</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">Bubble.io için geliştirilmiş ödeme API çözümü</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Header background on scroll
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        });
+    </script>
+</body>
+</html>
