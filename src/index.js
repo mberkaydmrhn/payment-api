@@ -23,11 +23,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ DOSYA İSMİNİ KONTROL EDİN - payment.js mi payments.js mi?
-app.use('/api/payments', require('./routes/payment'));
-
 // Static files (public klasörü için)
 app.use(express.static(path.join(__dirname, '../public')));
+
+// API Routes
+app.use('/api/payments', require('./routes/payment'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -54,13 +54,23 @@ app.get('/', (req, res) => {
   });
 });
 
-// HTML sayfası için route
+// Demo sayfası için route
 app.get('/demo', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Error handler (en sonda)
 app.use(errorHandler);
+
+// Static files (public klasörü için) - cache kontrolü eklendi
+app.use(express.static(path.join(__dirname, '../public'), {
+  maxAge: '1d',
+  etag: false, // ETAG'ı kapat
+  lastModified: false, // Last Modified kapat
+  setHeaders: (res, path) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+}));
 
 // 404 handler
 app.use('*', (req, res) => {

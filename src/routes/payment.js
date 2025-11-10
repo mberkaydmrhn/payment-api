@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Örnek ödeme verileri (gerçek uygulamada database kullanın)
-const payment = new Map();
+const payments = new Map();
 
 // Ödeme oluştur
 router.post('/create', (req, res) => {
@@ -36,7 +36,7 @@ router.post('/create', (req, res) => {
     };
 
     // Ödemeyi kaydet
-    payment.set(paymentId, paymentData);
+    payments.set(paymentId, paymentData);
 
     console.log(`✅ Ödeme oluşturuldu: ${paymentId}`);
 
@@ -65,9 +65,13 @@ router.post('/create', (req, res) => {
 router.get('/:id/status', (req, res) => {
   try {
     const { id } = req.params;
-    const payment = payment.get(id);
+    console.log(`🔍 Ödeme sorgulanıyor: ${id}`);
+    console.log(`📊 Mevcut ödemeler:`, Array.from(payments.keys()));
+
+    const payment = payments.get(id);
 
     if (!payment) {
+      console.log(`❌ Ödeme bulunamadı: ${id}`);
       return res.status(404).json({
         success: false,
         error: {
@@ -76,6 +80,8 @@ router.get('/:id/status', (req, res) => {
         }
       });
     }
+
+    console.log(`✅ Ödeme bulundu:`, payment);
 
     res.json({
       success: true,
@@ -90,7 +96,7 @@ router.get('/:id/status', (req, res) => {
     });
 
   } catch (error) {
-    console.error('Ödeme sorgulama hatası:', error);
+    console.error('❌ Ödeme sorgulama hatası:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -104,7 +110,7 @@ router.get('/:id/status', (req, res) => {
 // Ödeme listesi (admin için)
 router.get('/', (req, res) => {
   try {
-    const paymentList = Array.from(payment.values()).map(payment => ({
+    const paymentList = Array.from(payments.values()).map(payment => ({
       id: payment.id,
       amount: payment.amount,
       currency: payment.currency,
@@ -115,7 +121,7 @@ router.get('/', (req, res) => {
     res.json({
       success: true,
       data: {
-        payment: paymentList,
+        payments: paymentList,
         total: paymentList.length
       }
     });
