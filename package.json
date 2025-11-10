@@ -1,0 +1,14 @@
+# Bubble + PaymentAPI Entegrasyon Kılavuzu
+
+## 1. API Connector Ekleme
+- Plugin → API Connector → "PaymentAPI"
+- Base URL: `https://your-api-url.com` (şimdilik `http://localhost:3000`)
+
+## 2. Endpoint'leri Tanımla
+- **Create Payment** (POST /api/payments/create)
+- **Check Status** (GET /api/payments/:id/status)
+
+## 3. Workflow Oluştur
+- Buton tıklandığında: "Create Payment" çağır
+- Gelen `payment_url`'e yönlendir
+- Ödeme sonrası durumu kontrol et
