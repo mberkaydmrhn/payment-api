@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use('/api/payments', require('./routes/payments'));
+app.use('/api/payments', require('./routes/payment'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Payment API: http://localhost:${PORT}`);
