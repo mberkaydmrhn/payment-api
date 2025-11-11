@@ -3,290 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PaymentAPI - Bubble Ödeme Çözümü</title>
+    <title>PaymentAPI - Developer Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --radius: 16px;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
             min-height: 100vh;
+            color: var(--text-main);
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .payment-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* SOL PANEL - FORM ALANI */
+        .main-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
         }
 
         .header {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .language-switcher {
+            margin-bottom: 25px;
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
+        .brand span { color: var(--primary); }
+        .brand p { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
+
+        .lang-switch {
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 8px;
+            display: flex;
         }
 
         .lang-btn {
-            padding: 8px 20px;
-            border: 2px solid white;
-            background: transparent;
-            color: white;
-            border-radius: 25px;
+            border: none;
+            background: none;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .lang-btn.active {
-            background: white;
-            color: #007bff;
-        }
+        .lang-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
+        /* TABS */
         .tabs {
             display: flex;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
         }
 
         .tab {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
             background: none;
             border: none;
+            padding: 8px 16px;
+            color: var(--text-light);
+            font-weight: 500;
             cursor: pointer;
-            font-size: 1.1rem;
-            transition: all 0.3s;
+            position: relative;
+            transition: 0.3s;
         }
 
-        .tab.active {
-            background: white;
-            border-bottom: 3px solid #007bff;
-            color: #007bff;
-            font-weight: bold;
-        }
-
-        .tab-content {
-            padding: 30px;
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-        }
-
-        input, button {
+        .tab.active { color: var(--primary); font-weight: 600; }
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 0;
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        /* FORMS */
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-main); margin-bottom: 6px; }
+        
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
         }
 
         input:focus {
             outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
+        .input-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 15px;
-            font-size: 1.1rem;
+            border-radius: 10px;
             font-weight: 600;
+            font-size: 1rem;
             cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            margin-top: 10px;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
-        }
+        button.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
-        .api-response {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            min-height: 60px;
-        }
-
-        .response-success {
-            background: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-
-        .response-error {
-            background: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
-
-        .card-preview {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-top: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-
-        .card-number {
-            font-size: 1.5rem;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .card-details {
+        /* SAĞ PANEL - ÖNİZLEME & LOG */
+        .side-panel {
             display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .status-indicator {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
+        .credit-card {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            border-radius: var(--radius);
+            padding: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3);
+            aspect-ratio: 1.58/1;
+        }
+
+        .card-chip {
+            width: 40px;
+            height: 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 20px; }
+        .card-info { display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .card-name { font-weight: 600; }
+
+        /* API RESPONSE AREA */
+        .api-log {
+            background: #0f172a;
+            border-radius: var(--radius);
+            padding: 20px;
+            color: #22d3ee;
+            font-family: 'Courier New', monospace;
             font-size: 0.8rem;
-            font-weight: bold;
-            margin-left: 10px;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #334155;
         }
 
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
+        .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--error); }
+        .log-label { color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px; }
 
-        .status-completed {
-            background: #d1ecf1;
-            color: #0c5460;
+        /* COPY BUTTON */
+        .copy-group { position: relative; }
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 36px; /* Label height + padding adjust */
+            background: #f1f5f9;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: var(--text-light);
         }
+        .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
 
-        .status-failed {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .tab-content {
-                padding: 20px;
-            }
+            .container { grid-template-columns: 1fr; }
+            .side-panel { order: -1; } /* Mobilde kart üstte görünsün */
         }
     </style>
 </head>
 <body>
-    <div class="payment-container">
-        <div class="header">
-            <h1 data-tr="PaymentAPI Demo" data-en="PaymentAPI Demo">PaymentAPI Demo</h1>
-            <p data-tr="Bubble için güvenli ödeme çözümü" data-en="Secure payment solution for Bubble">Bubble için güvenli ödeme çözümü</p>
-            
-            <div class="language-switcher">
-                <button class="lang-btn active" data-lang="tr">TR</button>
-                <button class="lang-btn" data-lang="en">EN</button>
+    <div class="container">
+        <div class="main-card">
+            <div class="header">
+                <div class="brand">
+                    <h1>Payment<span>API</span></h1>
+                    <p>Developer Dashboard</p>
+                </div>
+                <div class="language-switcher lang-switch">
+                    <button class="lang-btn active" data-lang="tr">TR</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="payment" data-tr="Ödeme Oluştur" data-en="New Payment">Ödeme Oluştur</button>
+                <button class="tab" data-tab="status" data-tr="İşlem Sorgula" data-en="Check Status">İşlem Sorgula</button>
+            </div>
+
+            <div id="paymentTab" class="tab-content active">
+                <form id="paymentForm">
+                    <div class="form-group">
+                        <label data-tr="Tutar (TRY)" data-en="Amount (TRY)">Tutar (TRY)</label>
+                        <input type="number" id="amount" name="amount" placeholder="150.00" step="0.01" min="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-tr="Açıklama" data-en="Description">Açıklama</label>
+                        <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
+                        <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://app.bubble.io/api/1.1/wf/payment_success">
+                        <div class="input-hint" data-tr="Bubble Backend Workflow URL'nizi buraya yapıştırın." data-en="Paste your Bubble Backend Workflow URL here.">Bubble Backend Workflow URL'nizi buraya yapıştırın.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-tr="Kart Sahibi" data-en="Card Holder">Kart Sahibi</label>
+                        <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required onkeyup="updateCardPreview(this.value)">
+                    </div>
+
+                    <div class="form-group">
+                        <label>E-Mail</label>
+                        <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur</button>
+                </form>
+            </div>
+
+            <div id="statusTab" class="tab-content">
+                <div class="form-group copy-group">
+                    <label>Payment ID</label>
+                    <input type="text" id="paymentId" placeholder="pay_..." style="font-family: monospace;">
+                    <button type="button" class="copy-btn" onclick="copyToClipboard('paymentId')">Kopyala</button>
+                </div>
+                <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durumu Kontrol Et" data-en="Check Status">Durumu Kontrol Et</button>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab active" data-tab="payment" data-tr="Ödeme Yap" data-en="Make Payment">Ödeme Yap</button>
-            <button class="tab" data-tab="status" data-tr="Durum Sorgula" data-en="Check Status">Durum Sorgula</button>
-        </div>
-
-        <div id="paymentTab" class="tab-content active">
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label for="amount" data-tr="Tutar (₺)" data-en="Amount (₺)">Tutar (₺)</label>
-                    <input type="number" id="amount" name="amount" placeholder="150.00" step="0.01" min="1" required>
+        <div class="side-panel">
+            <div class="credit-card">
+                <div class="card-chip"></div>
+                <div class="card-number">**** **** **** 4242</div>
+                <div class="card-info">
+                    <div class="card-name" id="cardHolderDisplay">AHMET YILMAZ</div>
+                    <div class="card-date">12/28</div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="description" data-tr="Açıklama" data-en="Description">Açıklama</label>
-                    <input type="text" id="description" name="description" placeholder="Üyelik ödemesi" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="customerName" data-tr="Müşteri Adı" data-en="Customer Name">Müşteri Adı</label>
-                    <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="customerEmail" data-tr="Müşteri E-posta" data-en="Customer Email">Müşteri E-posta</label>
-                    <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
-                </div>
-                
-                <button type="submit" class="btn-primary" data-tr="Ödeme Oluştur" data-en="Create Payment">Ödeme Oluştur</button>
-            </form>
-            
-            <div id="apiResponse" class="api-response"></div>
-        </div>
-
-        <div id="statusTab" class="tab-content">
-            <div class="form-group">
-                <label for="paymentId" data-tr="Payment ID" data-en="Payment ID">Payment ID</label>
-                <input type="text" id="paymentId" placeholder="pay_123456789" data-tr="Payment ID girin" data-en="Enter Payment ID">
             </div>
-            
-            <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durum Sorgula" data-en="Check Status">Durum Sorgula</button>
-            
-            <div id="statusResponse" class="api-response"></div>
-        </div>
 
-        <div class="card-preview">
-            <div class="card-number">**** **** **** 4242</div>
-            <div class="card-details">
-                <div id="cardHolderName">AHMET YILMAZ</div>
-                <div>12/25</div>
+            <div class="api-log" id="apiResponse">
+                <div class="log-entry">
+                    <span class="log-label">SYSTEM</span>
+                    Ready for requests...
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="/demo.js?v=2"></script>
+    <script src="/demo.js"></script>
 </body>
 </html>

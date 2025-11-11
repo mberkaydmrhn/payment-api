@@ -1,283 +1,170 @@
-// public/demo.js - TAM ÇALIŞAN VERSİYON
+// public/demo.js - YENİ UI UYUMLU
 
-// API Base URL - Render üzerindeki API'miz
-const API_BASE_URL = 'https://payment-api-9g10.onrender.com';
+const API_BASE_URL = window.location.origin;
 
 // ==================== DİL SİSTEMİ ====================
-
 function changeLanguage(lang) {
-    console.log(`🌐 Dil değiştiriliyor: ${lang}`);
-    
-    // Dil butonlarını güncelle
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.getAttribute('data-lang') === lang) {
-            btn.classList.add('active');
-        }
+        if (btn.getAttribute('data-lang') === lang) btn.classList.add('active');
     });
 
-    // Tüm çok dilli elementleri güncelle
     document.querySelectorAll('[data-tr]').forEach(element => {
-        const turkishText = element.getAttribute('data-tr');
-        const englishText = element.getAttribute('data-en');
-        
-        if (lang === 'tr' && turkishText) {
-            element.textContent = turkishText;
-        } else if (lang === 'en' && englishText) {
-            element.textContent = englishText;
-        }
+        const text = lang === 'tr' ? element.getAttribute('data-tr') : element.getAttribute('data-en');
+        if (text) element.innerText = text;
     });
 
-    // Input placeholder'larını güncelle
-    updateInputPlaceholders(lang);
+    // Input placeholderları
+    const inputs = {
+        amount: { tr: '150.00', en: '150.00' },
+        description: { tr: 'Premium Üyelik', en: 'Premium Membership' },
+        customerName: { tr: 'Ahmet Yılmaz', en: 'John Doe' }
+    };
+    
+    for (const [id, placeholders] of Object.entries(inputs)) {
+        const el = document.getElementById(id);
+        if(el) el.placeholder = placeholders[lang];
+    }
 
-    // Sayfa başlığını güncelle
-    document.title = lang === 'en' 
-        ? 'PaymentAPI - Bubble Payment Solution' 
-        : 'PaymentAPI - Bubble için Ödeme Çözümü';
-
-    // Seçilen dili kaydet
     localStorage.setItem('preferred-language', lang);
 }
 
-function updateInputPlaceholders(lang) {
-    const placeholders = {
-        tr: {
-            amount: '150.00',
-            description: 'Üyelik ödemesi',
-            customerName: 'Ahmet Yılmaz',
-            customerEmail: 'ahmet@example.com',
-            paymentId: 'pay_123456789'
-        },
-        en: {
-            amount: '150.00',
-            description: 'Membership payment',
-            customerName: 'John Doe',
-            customerEmail: 'john@example.com',
-            paymentId: 'pay_123456789'
-        }
-    };
-    
-    const ph = placeholders[lang];
-    if (!ph) return;
-    
-    const amountInput = document.getElementById('amount');
-    const descriptionInput = document.getElementById('description');
-    const customerNameInput = document.getElementById('customerName');
-    const customerEmailInput = document.getElementById('customerEmail');
-    const paymentIdInput = document.getElementById('paymentId');
-    
-    if (amountInput) amountInput.placeholder = ph.amount;
-    if (descriptionInput) descriptionInput.placeholder = ph.description;
-    if (customerNameInput) customerNameInput.placeholder = ph.customerName;
-    if (customerEmailInput) customerEmailInput.placeholder = ph.customerEmail;
-    if (paymentIdInput) paymentIdInput.placeholder = ph.paymentId;
-}
+// ==================== UI FONKSİYONLARI ====================
 
-// ==================== TAB SİSTEMİ ====================
-
-function changeTab(tabName) {
-    console.log(`📑 Tab değiştiriliyor: ${tabName}`);
-    
-    // Tüm tab içeriklerini gizle
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Tüm tab butonlarını pasif yap
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    // Seçilen tab'ı aktif yap
-    const tabElement = document.getElementById(tabName + 'Tab');
-    const tabButton = document.querySelector(`[data-tab="${tabName}"]`);
-    
-    if (tabElement) tabElement.classList.add('active');
-    if (tabButton) tabButton.classList.add('active');
-}
-
-// ==================== ÖDEME SİSTEMİ ====================
-
-function updateCardPreview(customerName) {
-    const cardName = document.getElementById('cardHolderName');
-    if (cardName) {
-        cardName.textContent = customerName ? customerName.toUpperCase() : 'AHMET YILMAZ';
+// Kopyala Butonu
+function copyToClipboard(elementId) {
+    const el = document.getElementById(elementId);
+    if(el && el.value) {
+        navigator.clipboard.writeText(el.value);
+        const btn = el.parentElement.querySelector('button');
+        const originalText = btn.innerText;
+        btn.innerText = "Kopyalandı!";
+        setTimeout(() => btn.innerText = originalText, 2000);
     }
 }
 
+// Kart Önizleme
+function updateCardPreview(name) {
+    const display = document.getElementById('cardHolderDisplay');
+    if(display) display.textContent = name.toUpperCase() || 'AD SOYAD';
+}
+
+// Log Sistemi
+function addLog(message, type = 'info') {
+    const logContainer = document.getElementById('apiResponse');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    
+    const time = new Date().toLocaleTimeString();
+    const colorClass = type === 'success' ? 'log-success' : (type === 'error' ? 'log-error' : '');
+    
+    entry.innerHTML = `
+        <span class="log-label">[${time}] ${type.toUpperCase()}</span>
+        <div class="${colorClass}">${message}</div>
+    `;
+    
+    logContainer.insertBefore(entry, logContainer.firstChild);
+}
+
+function changeTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// ==================== API İŞLEMLERİ ====================
+
 async function processPayment(event) {
     event.preventDefault();
-    console.log('💳 Ödeme işleniyor...');
+    addLog('Ödeme isteği oluşturuluyor...', 'info');
     
     const formData = new FormData(event.target);
     const paymentData = {
         amount: parseFloat(formData.get('amount')),
         description: formData.get('description'),
+        webhookUrl: formData.get('webhookUrl'),
+        returnUrl: window.location.href,
         customerInfo: {
             name: formData.get('customerName'),
             email: formData.get('customerEmail')
         }
     };
 
-    // Kart önizlemesini güncelle
-    updateCardPreview(paymentData.customerInfo.name);
-
-    const responseElement = document.getElementById('apiResponse');
-    showLoading(responseElement, 'Ödeme işleniyor...');
-
     try {
-        console.log('📤 API isteği gönderiliyor:', paymentData);
-        
         const response = await fetch(`${API_BASE_URL}/api/payments/create`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(paymentData)
         });
 
         const result = await response.json();
-        console.log('📥 API yanıtı:', result);
         
         if (result.success) {
-            showSuccess(responseElement, '✅ Ödeme başarıyla oluşturuldu!', result);
+            addLog(`✅ Ödeme ID: ${result.data.paymentId}`, 'success');
+            addLog(`🔗 Redirect URL: ${result.data.paymentUrl}`, 'info');
             
-            // Payment ID'yi status sorgulama alanına otomatik doldur
-            document.getElementById('paymentId').value = result.data.paymentId;
-            
-            // Başarı durumunda status tab'ına geç
-            setTimeout(() => changeTab('status'), 1500);
+            // ID'yi kaydet
+            const pIdInput = document.getElementById('paymentId');
+            if(pIdInput) pIdInput.value = result.data.paymentId;
+
+            setTimeout(() => {
+                if(confirm("Bubble uygulamasında kullanıcı ödeme sayfasına yönlendirilir. Simüle etmek ister misiniz?")) {
+                    window.location.href = result.data.paymentUrl;
+                } else {
+                    changeTab('status');
+                }
+            }, 1000);
         } else {
-            showError(responseElement, '❌ Ödeme oluşturulamadı', result);
+            addLog(`❌ Hata: ${result.error.message}`, 'error');
         }
     } catch (error) {
-        console.error('❌ Fetch hatası:', error);
-        showError(responseElement, '❌ Bağlantı hatası', error.message);
+        addLog(`❌ Bağlantı Hatası: ${error.message}`, 'error');
     }
 }
 
 async function checkPaymentStatus() {
-    const paymentId = document.getElementById('paymentId').value.trim();
-    const responseElement = document.getElementById('statusResponse');
+    const id = document.getElementById('paymentId').value;
+    if(!id) return addLog('Lütfen bir Payment ID girin', 'error');
     
-    if (!paymentId) {
-        showError(responseElement, '❌ Lütfen bir Payment ID girin');
-        return;
-    }
-
-    showLoading(responseElement, '⏳ Durum sorgulanıyor...');
-
+    addLog(`🔍 Sorgulanıyor: ${id}`, 'info');
+    
     try {
-        console.log(`🔍 Ödeme durumu sorgulanıyor: ${paymentId}`);
+        const res = await fetch(`${API_BASE_URL}/api/payments/${id}/status`);
+        const data = await res.json();
         
-        const response = await fetch(`${API_BASE_URL}/api/payments/${paymentId}/status`);
-        const result = await response.json();
-        
-        if (result.success) {
-            showSuccess(responseElement, '✅ Ödeme durumu:', result);
+        if(data.success) {
+            const status = data.data.status.toUpperCase();
+            addLog(`📊 Durum: ${status} | Tutar: ${data.data.amount} ${data.data.currency}`, 'success');
         } else {
-            showError(responseElement, '❌ Durum sorgulanamadı', result);
+            addLog('Kayıt bulunamadı.', 'error');
         }
-    } catch (error) {
-        console.error('❌ Durum sorgulama hatası:', error);
-        showError(responseElement, '❌ Bağlantı hatası', error.message);
+    } catch(e) {
+        addLog('Sorgulama hatası', 'error');
     }
 }
 
-// ==================== UI YARDIMCI FONKSİYONLAR ====================
+// ==================== BAŞLATMA ====================
 
-function showLoading(element, message) {
-    if (!element) return;
-    element.innerHTML = `<span style="color: #6c757d;">${message}</span>`;
-    element.className = 'api-response';
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('paymentForm');
+    if(form) form.addEventListener('submit', processPayment);
 
-function showSuccess(element, message, data) {
-    if (!element) return;
-    let content = `<span style="color: #28a745; font-weight: bold;">${message}</span>`;
-    
-    if (data) {
-        content += `\n\n${JSON.stringify(data, null, 2)}`;
-    }
-    
-    element.innerHTML = content;
-    element.className = 'api-response response-success';
-}
-
-function showError(element, message, error) {
-    if (!element) return;
-    let content = `<span style="color: #dc3545; font-weight: bold;">${message}</span>`;
-    
-    if (error) {
-        content += `\n\n${typeof error === 'object' ? JSON.stringify(error, null, 2) : error}`;
-    }
-    
-    element.innerHTML = content;
-    element.className = 'api-response response-error';
-}
-
-// ==================== OLAYLARI BAĞLAMA ====================
-
-function initializeEventListeners() {
-    console.log('🔧 Event listenerlar başlatılıyor...');
-    
-    // Form submit event'i
-    const paymentForm = document.getElementById('paymentForm');
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', processPayment);
-    }
-
-    // Tab click event'leri
     document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            changeTab(this.getAttribute('data-tab'));
-        });
+        tab.addEventListener('click', function() { changeTab(this.getAttribute('data-tab')); });
     });
-
-    // Dil butonları
+    
     document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            changeLanguage(this.getAttribute('data-lang'));
-        });
+        btn.addEventListener('click', function() { changeLanguage(this.getAttribute('data-lang')); });
     });
-
-    // Status sorgulama butonu - event delegation kullan
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.onclick && e.target.onclick.name === 'checkPaymentStatus') {
-            checkPaymentStatus();
-        }
-    });
-
-    // Enter tuşu ile status sorgulama
-    const paymentIdInput = document.getElementById('paymentId');
-    if (paymentIdInput) {
-        paymentIdInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkPaymentStatus();
-            }
-        });
+    
+    // URL Kontrol
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    if (status) {
+        addLog(status === 'success' ? '✅ Ödeme Başarıyla Tamamlandı!' : '❌ Ödeme Başarısız Oldu.', status === 'success' ? 'success' : 'error');
+        window.history.replaceState({}, document.title, "/demo");
+        changeTab('status');
     }
-}
-
-// ==================== UYGULAMA BAŞLATMA ====================
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 PaymentAPI Demo başlatılıyor...');
-    
-    // Varsayılan değerleri ayarla
-    const amountInput = document.getElementById('amount');
-    if (amountInput) amountInput.value = '150.00';
-    
-    // Dil tercihini yükle
-    const savedLang = localStorage.getItem('preferred-language') || 'tr';
-    changeLanguage(savedLang);
-    
-    // Event listener'ları başlat
-    initializeEventListeners();
-    
-    console.log('✅ PaymentAPI Demo hazır!');
 });
-
-// Global function - butonlar için
-window.checkPaymentStatus = checkPaymentStatus;

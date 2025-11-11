@@ -1,7 +1,8 @@
 const helmet = require('helmet');
 
 const securityHeaders = helmet({
-  contentSecurityPolicy: false // CSP'yi devre dışı bırak
+  contentSecurityPolicy: false, // CSS ve JS engellemeyi kapat
+  crossOriginEmbedderPolicy: false
 });
 
 module.exports = securityHeaders;

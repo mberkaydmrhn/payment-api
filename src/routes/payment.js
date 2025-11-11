@@ -1,140 +1,127 @@
+// src/routes/payment.js - MongoDB Versiyonu
 const express = require('express');
 const router = express.Router();
+const fetch = require('node-fetch');
+const Payment = require('../models/Payment'); // Modeli çağırdık
 
-// Örnek ödeme verileri (gerçek uygulamada database kullanın)
-const payments = new Map();
-
-// Ödeme oluştur
-router.post('/create', (req, res) => {
+// Webhook Yardımcısı
+async function triggerWebhook(url, data) {
+  if (!url) return;
   try {
-    const { amount, currency = 'TRY', description, customerInfo } = req.body;
+    console.log(`🔔 Webhook tetikleniyor: ${url}`);
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(err => console.error('❌ Webhook gönderim hatası:', err.message));
+  } catch (error) {
+    console.error('❌ Webhook genel hata:', error);
+  }
+}
 
-    // Validasyon
+// 1. Ödeme Oluştur
+router.post('/create', async (req, res) => {
+  try {
+    const { amount, currency = 'TRY', description, customerInfo, webhookUrl, returnUrl } = req.body;
+
     if (!amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_AMOUNT',
-          message: 'Geçersiz tutar'
-        }
-      });
+      return res.status(400).json({ success: false, error: { code: 'INVALID_AMOUNT', message: 'Geçersiz tutar' } });
     }
 
-    // Ödeme ID oluştur
     const paymentId = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    
-    // Ödeme verisi
-    const paymentData = {
-      id: paymentId,
+    const protocol = req.protocol;
+    const host = req.get('host');
+    const paymentUrl = `${protocol}://${host}/pay/${paymentId}`;
+
+    // MongoDB'ye kaydet
+    const newPayment = await Payment.create({
+      paymentId,
       amount,
       currency,
       description,
       customerInfo,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      webhookUrl,
+      returnUrl,
+      status: 'pending'
+    });
 
-    // Ödemeyi kaydet
-    payments.set(paymentId, paymentData);
-
-    console.log(`✅ Ödeme oluşturuldu: ${paymentId}`);
+    console.log(`✅ Ödeme DB'ye yazıldı: ${paymentId}`);
 
     res.status(201).json({
       success: true,
       data: {
-        paymentId,
-        status: 'pending',
-        createdAt: paymentData.createdAt
+        paymentId: newPayment.paymentId,
+        paymentUrl,
+        status: newPayment.status
       }
     });
 
   } catch (error) {
     console.error('Ödeme oluşturma hatası:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'PAYMENT_CREATION_FAILED',
-        message: 'Ödeme oluşturulamadı'
-      }
-    });
+    res.status(500).json({ success: false, error: { code: 'ERROR', message: error.message } });
   }
 });
 
-// Ödeme durumu sorgula
-router.get('/:id/status', (req, res) => {
+// 2. Ödeme Tamamla
+router.post('/:id/complete', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`🔍 Ödeme sorgulanıyor: ${id}`);
-    console.log(`📊 Mevcut ödemeler:`, Array.from(payments.keys()));
+    const { success } = req.body;
 
-    const payment = payments.get(id);
-
+    // Veritabanında ID'ye göre bul
+    const payment = await Payment.findOne({ paymentId: id });
+    
     if (!payment) {
-      console.log(`❌ Ödeme bulunamadı: ${id}`);
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'PAYMENT_NOT_FOUND',
-          message: 'Ödeme bulunamadı'
-        }
+      return res.status(404).json({ success: false, message: 'Ödeme bulunamadı' });
+    }
+
+    // Durumu güncelle
+    payment.status = success ? 'paid' : 'failed';
+    await payment.save(); // Değişikliği kaydet
+
+    // Webhook Tetikle
+    if (payment.webhookUrl) {
+      triggerWebhook(payment.webhookUrl, {
+        event: 'payment.completed',
+        paymentId: payment.paymentId,
+        status: payment.status,
+        amount: payment.amount,
+        currency: payment.currency
       });
     }
 
-    console.log(`✅ Ödeme bulundu:`, payment);
-
-    res.json({
-      success: true,
-      data: {
-        paymentId: payment.id,
-        status: payment.status,
-        amount: payment.amount,
-        currency: payment.currency,
-        createdAt: payment.createdAt,
-        updatedAt: payment.updatedAt
-      }
+    res.json({ 
+      success: true, 
+      returnUrl: payment.returnUrl || '/' 
     });
 
   } catch (error) {
-    console.error('❌ Ödeme sorgulama hatası:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'PAYMENT_QUERY_FAILED',
-        message: 'Ödeme durumu sorgulanamadı'
-      }
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Ödeme listesi (admin için)
-router.get('/', (req, res) => {
+// 3. Durum Sorgula
+router.get('/:id/status', async (req, res) => {
   try {
-    const paymentList = Array.from(payments.values()).map(payment => ({
-      id: payment.id,
-      amount: payment.amount,
-      currency: payment.currency,
-      status: payment.status,
-      createdAt: payment.createdAt
-    }));
-
+    // Veritabanından oku
+    const payment = await Payment.findOne({ paymentId: req.params.id });
+    
+    if (!payment) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Ödeme bulunamadı' } });
+    }
+    
     res.json({
       success: true,
       data: {
-        payments: paymentList,
-        total: paymentList.length
+        paymentId: payment.paymentId,
+        status: payment.status,
+        amount: payment.amount,
+        currency: payment.currency,
+        createdAt: payment.createdAt
       }
     });
-
   } catch (error) {
-    console.error('Ödeme listeleme hatası:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'PAYMENT_LIST_FAILED',
-        message: 'Ödemeler listelenemedi'
-      }
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
