@@ -1,4 +1,4 @@
-// public/demo.js - YENİ UI UYUMLU
+// public/demo.js - TAMAMEN GÜNCEL
 
 const API_BASE_URL = window.location.origin;
 
@@ -70,12 +70,16 @@ function changeTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    const content = document.getElementById(tabName + 'Tab');
+    const btn = document.querySelector(`[data-tab="${tabName}"]`);
+    
+    if(content) content.classList.add('active');
+    if(btn) btn.classList.add('active');
 }
 
 // ==================== API İŞLEMLERİ ====================
 
+// Ödeme Oluştur
 async function processPayment(event) {
     event.preventDefault();
     addLog('Ödeme isteği oluşturuluyor...', 'info');
@@ -124,6 +128,7 @@ async function processPayment(event) {
     }
 }
 
+// Durum Sorgula
 async function checkPaymentStatus() {
     const id = document.getElementById('paymentId').value;
     if(!id) return addLog('Lütfen bir Payment ID girin', 'error');
@@ -142,6 +147,61 @@ async function checkPaymentStatus() {
         }
     } catch(e) {
         addLog('Sorgulama hatası', 'error');
+    }
+}
+
+// İşlem Geçmişi Yükle
+async function loadHistory() {
+    const tbody = document.getElementById('historyList');
+    // Yükleniyor animasyonu
+    tbody.innerHTML = `<tr><td colspan="4" style="padding:20px; text-align:center; color:#64748b;">Veriler getiriliyor...</td></tr>`;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/payments`);
+        const data = await res.json();
+
+        if(data.success && data.data.length > 0) {
+            tbody.innerHTML = ''; // Temizle
+            
+            data.data.forEach(pay => {
+                const date = new Date(pay.createdAt).toLocaleDateString('tr-TR') + ' ' + new Date(pay.createdAt).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
+                
+                // Durum Renkleri
+                let statusColor = '#f59e0b'; // Sarı (Pending)
+                let statusText = 'BEKLİYOR';
+                
+                if(pay.status === 'paid') { statusColor = '#10b981'; statusText = 'ÖDENDİ'; }
+                if(pay.status === 'failed') { statusColor = '#ef4444'; statusText = 'HATA'; }
+
+                // ID Kısaltma Mantığı (pay_123...abc -> pay_...abc)
+                const shortId = pay.paymentId.length > 12 
+                    ? '...' + pay.paymentId.slice(-8) 
+                    : pay.paymentId;
+
+                const row = `
+                    <tr style="border-bottom: 1px solid #1e293b; transition: background 0.2s;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 14px 8px;">
+                            <button onclick="navigator.clipboard.writeText('${pay.paymentId}'); alert('ID Kopyalandı: ${pay.paymentId}')" 
+                                    style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.75rem;">
+                                ${shortId} ❐
+                            </button>
+                        </td>
+                        <td style="padding: 14px 8px; font-weight:600; color: #e2e8f0;">${pay.amount} ${pay.currency}</td>
+                        <td style="padding: 14px 8px;">
+                            <span style="background:${statusColor}20; color:${statusColor}; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; letter-spacing:0.5px;">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td style="padding: 14px 8px; color:#94a3b8; font-size: 0.75rem;">${date}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#64748b;">Henüz işlem geçmişi yok.</td></tr>';
+        }
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#ef4444;">Veri alınamadı.</td></tr>';
     }
 }
 
@@ -165,6 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (status) {
         addLog(status === 'success' ? '✅ Ödeme Başarıyla Tamamlandı!' : '❌ Ödeme Başarısız Oldu.', status === 'success' ? 'success' : 'error');
         window.history.replaceState({}, document.title, "/demo");
-        changeTab('status');
+        
+        // Başarılı dönüşte direkt geçmişi aç
+        changeTab('history');
+        loadHistory();
     }
 });

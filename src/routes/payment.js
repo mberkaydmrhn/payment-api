@@ -1,4 +1,4 @@
-// src/routes/payment.js - MongoDB Versiyonu
+// src/routes/payment.js - TAM GÜNCEL VERSİYON
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
@@ -100,10 +100,9 @@ router.post('/:id/complete', async (req, res) => {
   }
 });
 
-// 3. Durum Sorgula
+// 3. Tekil Durum Sorgula
 router.get('/:id/status', async (req, res) => {
   try {
-    // Veritabanından oku
     const payment = await Payment.findOne({ paymentId: req.params.id });
     
     if (!payment) {
@@ -124,5 +123,20 @@ router.get('/:id/status', async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+// 4. (YENİ) İşlem Listesi - Dashboard için son 20 işlem
+router.get('/', async (req, res) => {
+    try {
+      // En son oluşturulan 20 ödemeyi getir
+      const list = await Payment.find().sort({ createdAt: -1 }).limit(20);
+      
+      res.json({
+        success: true,
+        data: list
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
 
 module.exports = router;
