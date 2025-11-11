@@ -8,6 +8,7 @@ const iyzipay = new Iyzipay({
     uri: process.env.IYZICO_BASE_URL
 });
 
+// Ödeme Formunu Başlat
 const initializePayment = (data) => {
     return new Promise((resolve, reject) => {
         const request = {
@@ -18,7 +19,7 @@ const initializePayment = (data) => {
             currency: Iyzipay.CURRENCY.TRY,
             basketId: data.paymentId,
             paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-            callbackUrl: `${data.baseUrl}/api/payments/iyzico/callback`, // Dönüş adresi
+            callbackUrl: `${data.baseUrl}/api/payments/iyzico/callback`,
             enabledInstallments: [1, 2, 3, 6, 9],
             buyer: {
                 id: data.paymentId,
@@ -26,7 +27,7 @@ const initializePayment = (data) => {
                 surname: data.customerInfo.name.split(' ').slice(1).join(' ') || 'Kullanıcı',
                 gsmNumber: '+905300000000',
                 email: data.customerInfo.email,
-                identityNumber: '11111111111', // Sandbox için zorunlu değil ama format önemli
+                identityNumber: '11111111111',
                 lastLoginDate: '2015-10-05 12:43:35',
                 registrationAddress: 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1',
                 ip: data.ip,
@@ -38,14 +39,14 @@ const initializePayment = (data) => {
                 contactName: data.customerInfo.name,
                 city: 'Istanbul',
                 country: 'Turkey',
-                address: 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1',
+                address: 'Test Adresi',
                 zipCode: '34732'
             },
             billingAddress: {
                 contactName: data.customerInfo.name,
                 city: 'Istanbul',
                 country: 'Turkey',
-                address: 'Nidakule Göztepe, Merdivenköy Mah. Bora Sok. No:1',
+                address: 'Test Adresi',
                 zipCode: '34732'
             },
             basketItems: [
@@ -69,4 +70,17 @@ const initializePayment = (data) => {
     });
 };
 
-module.exports = { initializePayment };
+// YENİ: Ödeme Sonucunu Sorgula (Callback için)
+const retrievePaymentResult = (token) => {
+    return new Promise((resolve, reject) => {
+        iyzipay.checkoutForm.retrieve({ token: token }, (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+    });
+};
+
+module.exports = { initializePayment, retrievePaymentResult };

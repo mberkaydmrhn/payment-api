@@ -1,9 +1,9 @@
-// src/routes/payment.js - IYZICO ENTEGRE EDİLMİŞ VERSİYON
+// src/routes/payment.js - IYZICO VERITABANI GUNCELLEME FIX
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
 const Payment = require('../models/Payment');
-const IyzicoService = require('../services/iyzico'); // Iyzico servisi
+const IyzicoService = require('../services/iyzico');
 
 // Webhook Yardımcısı
 async function triggerWebhook(url, data) {
@@ -20,48 +20,46 @@ async function triggerWebhook(url, data) {
   }
 }
 
-// 1. Ödeme Oluştur (Mock veya Iyzico)
+// 1. Ödeme Oluştur
 router.post('/create', async (req, res) => {
   try {
     const { amount, currency = 'TRY', description, customerInfo, webhookUrl, returnUrl, provider = 'mock' } = req.body;
 
     if (!amount || amount <= 0) return res.status(400).json({ success: false, error: { message: 'Geçersiz tutar' } });
 
-    const paymentId = 'pay_' + Date.now() + Math.random().toString(36).substr(2, 5);
+    const paymentId = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const protocol = req.protocol;
     const host = req.get('host');
     const baseUrl = `${protocol}://${host}`;
     
     let paymentUrl = '';
-    let iyzicoHtml = '';
+    let providerData = '';
 
-    // IYZICO MANTIĞI
     if (provider === 'iyzico') {
-        console.log('🔵 Iyzico ödemesi başlatılıyor...');
-        const iyzicoResult = await IyzicoService.initializePayment({
-            paymentId,
-            amount,
-            description,
-            customerInfo,
-            ip: req.ip,
-            baseUrl
-        });
+        console.log('🔵 Iyzico başlatılıyor...');
+        try {
+            const iyzicoResult = await IyzicoService.initializePayment({
+                paymentId,
+                amount,
+                description: description || 'Genel Ödeme',
+                customerInfo,
+                ip: req.ip,
+                baseUrl
+            });
 
-        if (iyzicoResult.status !== 'success') {
-            throw new Error(iyzicoResult.errorMessage);
+            if (iyzicoResult.status !== 'success') {
+                throw new Error(iyzicoResult.errorMessage);
+            }
+            providerData = iyzicoResult.checkoutFormContent;
+            paymentUrl = `${baseUrl}/api/payments/render/${paymentId}`;
+        } catch (err) {
+            console.error('Iyzico Hatası:', err);
+            return res.status(500).json({ success: false, error: { message: 'Iyzico hatası: ' + err.message } });
         }
-
-        // Iyzico bize bir HTML içeriği veriyor. Bunu veritabanına kaydedip
-        // kullanıcıyı kendi render sayfamıza yönlendireceğiz.
-        iyzicoHtml = iyzicoResult.checkoutFormContent;
-        paymentUrl = `${baseUrl}/api/payments/render/${paymentId}`; // Özel render sayfası
-    } 
-    // MOCK MANTIĞI
-    else {
+    } else {
         paymentUrl = `${baseUrl}/pay/${paymentId}`;
     }
 
-    // Veritabanına Kayıt
     const newPayment = await Payment.create({
       paymentId,
       amount,
@@ -70,9 +68,9 @@ router.post('/create', async (req, res) => {
       customerInfo,
       webhookUrl,
       returnUrl,
-      status: 'pending',
-      provider: provider, // 'mock' veya 'iyzico'
-      providerData: iyzicoHtml // Iyzico HTML'ini burada saklayalım (Model'e eklemek gerekebilir)
+      status: 'pending', // İlk başta hep BEKLİYOR
+      provider,
+      providerData
     });
 
     console.log(`✅ Ödeme oluşturuldu (${provider}): ${paymentId}`);
@@ -81,7 +79,7 @@ router.post('/create', async (req, res) => {
       success: true,
       data: {
         paymentId: newPayment.paymentId,
-        paymentUrl, // Kullanıcı bu linke gidecek
+        paymentUrl,
         status: newPayment.status
       }
     });
@@ -92,20 +90,17 @@ router.post('/create', async (req, res) => {
   }
 });
 
-// 2. Iyzico Render Sayfası (Iyzico Formunu Gösteren Yer)
+// 2. Iyzico Render
 router.get('/render/:id', async (req, res) => {
     try {
         const payment = await Payment.findOne({ paymentId: req.params.id });
         if (!payment || !payment.providerData) return res.send('Ödeme formu bulunamadı.');
 
-        // Iyzico formunu basit bir HTML içinde sunuyoruz
         const html = `
             <!DOCTYPE html>
             <html>
-            <head><title>Güvenli Ödeme</title><meta charset="UTF-8"></head>
-            <body>
-                <div id="iyzipay-checkout-form" class="responsive"></div>
-                ${payment.providerData} </body>
+            <head><title>Güvenli Ödeme</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+            <body><div id="iyzipay-checkout-form" class="responsive"></div>${payment.providerData}</body>
             </html>
         `;
         res.send(html);
@@ -114,35 +109,55 @@ router.get('/render/:id', async (req, res) => {
     }
 });
 
-// 3. Iyzico Callback (Ödeme Sonucu Buraya Döner)
+// 3. IYZICO CALLBACK (GÜNCELLENDİ - VERİTABANI YAZMA)
 router.post('/iyzico/callback', async (req, res) => {
     try {
-        // Iyzico buraya form-data ile token döner
-        const token = req.body.token; 
-        
-        // Gerçek hayatta burada 'iyzipay.checkoutForm.retrieve' ile sonucu sorgulamamız lazım
-        // Ama şimdilik basitçe başarılı sayalım ve kullanıcıyı returnUrl'e gönderelim.
-        // Not: Iyzico conversationId'yi ödeme ID'miz olarak kullanıyor.
-        
-        // Burada token ile ödeme sonucunu sorgulayıp DB'yi güncellemeliyiz.
-        // Şimdilik veritabanında conversationId ile bulup güncelleyelim.
-        
-        // NOT: Callback'ten hangi ödeme olduğunu bulmak için Iyzico sorgusu şart.
-        // Şimdilik basit bir success sayfası gösterelim.
-        
-        res.send(`
-            <script>
-                window.location.href = '/demo?status=success';
-            </script>
-        `);
+        const token = req.body.token;
+        console.log('🔄 Iyzico dönüş yaptı, token:', token);
+
+        // 1. Iyzico'ya sor: Bu işlem ne oldu?
+        const result = await IyzicoService.retrievePaymentResult(token);
+
+        // 2. Bizim veritabanındaki ödemeyi bul (conversationId = paymentId)
+        // Iyzico'dan dönen basketId bizim paymentId'mizdir.
+        const paymentId = result.basketId; 
+        const payment = await Payment.findOne({ paymentId: paymentId });
+
+        if (!payment) {
+            console.error('❌ Kritik Hata: Iyzico dönüş yaptı ama ödeme DBde yok:', paymentId);
+            return res.redirect('/demo?status=failed');
+        }
+
+        // 3. Durumu Güncelle
+        if (result.paymentStatus === 'SUCCESS') {
+            console.log(`✅ Iyzico Ödemesi Başarılı: ${paymentId}`);
+            payment.status = 'paid';
+            
+            // Webhook Tetikle
+            if (payment.webhookUrl) {
+                triggerWebhook(payment.webhookUrl, {
+                    event: 'payment.completed',
+                    paymentId: payment.paymentId,
+                    status: 'paid',
+                    amount: payment.amount
+                });
+            }
+        } else {
+            console.log(`❌ Iyzico Ödemesi Başarısız: ${paymentId}`);
+            payment.status = 'failed';
+        }
+
+        // 4. Kaydet ve Yönlendir
+        await payment.save();
+        res.redirect(`/demo?status=${payment.status === 'paid' ? 'success' : 'failed'}`);
 
     } catch (error) {
         console.error('Callback Error:', error);
-        res.send('Ödeme işlemi sırasında bir hata oluştu.');
+        res.redirect('/demo?status=failed');
     }
 });
 
-// 4. Mock Ödeme Tamamla (Eski yöntem)
+// 4. Mock Tamamla
 router.post('/:id/complete', async (req, res) => {
   try {
     const payment = await Payment.findOne({ paymentId: req.params.id });
@@ -159,18 +174,16 @@ router.post('/:id/complete', async (req, res) => {
         amount: payment.amount
       });
     }
-
     res.json({ success: true, returnUrl: payment.returnUrl || '/' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// 5. Durum Sorgula
+// 5. Status
 router.get('/:id/status', async (req, res) => {
   const payment = await Payment.findOne({ paymentId: req.params.id });
   if (!payment) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND' } });
-  
   res.json({
     success: true,
     data: {
@@ -178,6 +191,7 @@ router.get('/:id/status', async (req, res) => {
       status: payment.status,
       amount: payment.amount,
       currency: payment.currency,
+      provider: payment.provider,
       createdAt: payment.createdAt
     }
   });
