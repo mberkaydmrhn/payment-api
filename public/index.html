@@ -43,6 +43,7 @@
             margin-top: 2vh;
         }
 
+        /* SOL PANEL */
         .main-card {
             background: var(--card-bg);
             border-radius: var(--radius);
@@ -69,18 +70,23 @@
         .tab.active { color: var(--primary); font-weight: 600; }
         .tab.active::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 2px; background: var(--primary); }
 
+        /* İÇERİK ALANI */
         .content-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
+        /* FORM ELEMANLARI */
         .form-group { margin-bottom: 18px; }
         label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px; }
-        input { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.2s; font-family: 'Inter', sans-serif; }
-        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        input, select { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.2s; font-family: 'Inter', sans-serif; background: white; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         
+        .input-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 6px; }
+
         button.btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
+        /* SAĞ PANEL */
         .side-panel { display: flex; flex-direction: column; gap: 25px; position: sticky; top: 20px; }
         .credit-card { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border-radius: var(--radius); padding: 25px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3); aspect-ratio: 1.58/1; }
         .card-chip { width: 40px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
@@ -94,56 +100,21 @@
         .log-error { color: var(--error); }
         .log-label { color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px; }
 
+        /* TABLO */
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; color: #64748b; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; padding: 10px;}
         td { padding: 16px 10px; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
         tr:hover td { background-color: #f8fafc; color: var(--primary-dark); }
 
-        /* TOAST (ALERT) STİLİ - DÜZELTİLMİŞ */
+        /* TOAST */
         #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: #1e293b;
-            color: #fff;
-            text-align: center;
-            border-radius: 50px;
-            padding: 16px 24px;
-            position: fixed;
-            z-index: 100;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            font-size: 0.95rem;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-weight: 500;
+            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 50px; padding: 16px 24px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.95rem; box-shadow: 0 15px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;
         }
-
-        #toast.show {
-            visibility: visible;
-            animation-name: fadein, fadeout;
-            animation-duration: 0.5s, 0.5s;
-            animation-delay: 0s, 2.5s;
-            animation-fill-mode: forwards;
-        }
-
-        @keyframes fadein {
-            from { bottom: 0; opacity: 0; }
-            to { bottom: 30px; opacity: 1; }
-        }
-
-        @keyframes fadeout {
-            from { bottom: 30px; opacity: 1; }
-            to { bottom: 0; opacity: 0; }
-        }
-
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(5px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .copy-btn { background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; color: var(--text-light); float: right; }
         .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
@@ -189,6 +160,16 @@
                             <label data-tr="Açıklama" data-en="Description">Açıklama</label>
                             <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
                         </div>
+                        
+                        <div class="form-group">
+                            <label>Ödeme Altyapısı (Provider)</label>
+                            <select name="provider" id="provider">
+                                <option value="mock">🟣 Simülasyon (Mock)</option>
+                                <option value="iyzico">🔵 Iyzico (Sandbox)</option>
+                            </select>
+                            <div class="input-hint">Hangi pos altyapısını test etmek istersiniz?</div>
+                        </div>
+
                         <div class="form-group">
                             <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
                             <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://app.bubble.io/api/1.1/wf/payment_success">
@@ -220,12 +201,12 @@
                             <tr>
                                 <th style="width: 120px;">ID</th>
                                 <th>Tutar</th>
-                                <th>Durum</th>
+                                <th>Altyapı</th> <th>Durum</th>
                                 <th>Tarih</th>
                             </tr>
                         </thead>
                         <tbody id="historyList">
-                            <tr><td colspan="4" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
+                            <tr><td colspan="5" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
                         </tbody>
                     </table>
                     <br>

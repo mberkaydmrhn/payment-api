@@ -1,50 +1,32 @@
-// public/demo.js - SADE VE SAĞLAM VERSİYON
+// public/demo.js - FİNAL + IYZICO
 
 const API_BASE_URL = window.location.origin;
 
-// ==================== 1. INPUT FORMATLAMA (KESİN ÇÖZÜM) ====================
+// ==================== YARDIMCI FONKSİYONLAR ====================
 
 function formatAmountInput(input) {
-    // 1. Mevcut değeri al
     let val = input.value;
-
-    // 2. Önce içerideki BİNLİK AYRACI olan noktaları temizle.
-    // Böylece elimizde saf "15000" veya "15000,50" kalsın.
-    val = val.replace(/\./g, '');
-
-    // 3. Şimdi eğer kullanıcı YENİ bir nokta (.) girdiyse onu virgüle çevir.
-    // (Numpad kullananlar için)
     val = val.replace(/\./g, ',');
-
-    // 4. Rakam ve Virgül harici her şeyi yok et (Harf vs giremesin)
     val = val.replace(/[^0-9,]/g, '');
-
-    // 5. Virgülle ikiye böl: [Tam Sayı, Küsürat]
     const parts = val.split(',');
+    
     let integerPart = parts[0];
-    let decimalPart = parts.length > 1 ? parts[1] : null;
-
-    // 6. Tam sayı kısmındaki baştaki sıfırları sil (0500 -> 500)
     if (integerPart.length > 1 && integerPart.startsWith('0')) {
         integerPart = integerPart.substring(1);
     }
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-    // 7. Tam sayı kısmını tekrar binlik noktalarla süsle
-    // Regex: 3 basamakta bir nokta koy
-    let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-    // 8. Sonucu birleştir ve yaz
-    if (decimalPart !== null) {
-        // Küsürat varsa (veya kullanıcı virgül bastıysa)
-        // Küsüratı 2 hane ile sınırla
-        input.value = `${formattedInteger},${decimalPart.substring(0, 2)}`;
+    if (parts.length > 1) {
+        let decimalPart = parts[1].substring(0, 2);
+        input.value = `${integerPart},${decimalPart}`;
     } else {
-        // Küsürat yoksa sadece tam sayıyı yaz
-        input.value = formattedInteger;
+        if (val.indexOf(',') > -1) {
+            input.value = `${integerPart},`;
+        } else {
+            input.value = integerPart;
+        }
     }
 }
-
-// ==================== DİĞER FONKSİYONLAR (AYNI KALDI) ====================
 
 function formatMoney(amount, currency) {
     return new Intl.NumberFormat('tr-TR', { 
@@ -71,6 +53,8 @@ function copyToClipboard(elementId) {
     const el = document.getElementById(elementId);
     if(el && el.value) copyText(el.value);
 }
+
+// ==================== DİL & UI ====================
 
 function changeLanguage(lang) {
     document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -129,7 +113,6 @@ async function processPayment(event) {
     
     const formData = new FormData(event.target);
     
-    // === TUTAR PARSE (TR FORMATINDAN JS FORMATINA) ===
     let rawAmount = document.getElementById('amount').value;
     
     if (!rawAmount) {
@@ -137,26 +120,23 @@ async function processPayment(event) {
         return;
     }
 
-    // 1. Görsel noktaları sil: "10.000,50" -> "10000,50"
     rawAmount = rawAmount.replace(/\./g, '');
-    
-    // 2. Virgülü noktaya çevir: "10000,50" -> "10000.50"
     rawAmount = rawAmount.replace(',', '.');
-    
     const cleanAmount = parseFloat(rawAmount);
 
-    // Validasyon
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
         showToast("Geçersiz Tutar!");
         addLog("Hata: Tutar geçersiz", "error");
         return;
     }
 
+    // VERİ HAZIRLAMA (Provider Eklendi)
     const paymentData = {
         amount: cleanAmount,
         description: formData.get('description'),
         webhookUrl: formData.get('webhookUrl'),
         returnUrl: window.location.href,
+        provider: formData.get('provider'), // <--- YENİ: Mock veya Iyzico
         customerInfo: {
             name: formData.get('customerName'),
             email: formData.get('customerEmail')
@@ -174,18 +154,19 @@ async function processPayment(event) {
         if (result.success) {
             addLog(`✅ Ödeme ID: ${result.data.paymentId}`, 'success');
             
+            // Seçilen yöntemi logla
+            const providerName = formData.get('provider') === 'iyzico' ? 'Iyzico' : 'Mock';
+            addLog(`🚀 Yönlendirme: ${providerName}`, 'info');
+
             const pIdInput = document.getElementById('paymentId');
             if(pIdInput) pIdInput.value = result.data.paymentId;
 
-            showToast("Link Oluşturuldu! Yönlendiriliyor...");
+            showToast(`${providerName} Linki Hazır! Yönlendiriliyor...`);
             
             setTimeout(() => {
-                if(confirm("Ödeme Sayfasına Git? (Müşteri Deneyimi)")) {
-                    window.location.href = result.data.paymentUrl;
-                } else {
-                    changeTab('status');
-                }
-            }, 1000);
+                // Direkt yönlendir (Akış hızlı olsun)
+                window.location.href = result.data.paymentUrl;
+            }, 1500);
         } else {
             addLog(`❌ Hata: ${result.error.message}`, 'error');
             showToast("Hata oluştu!");
@@ -217,7 +198,7 @@ async function checkPaymentStatus() {
 
 async function loadHistory() {
     const tbody = document.getElementById('historyList');
-    tbody.innerHTML = `<tr><td colspan="4" style="padding:20px; text-align:center; color:#64748b;">Veriler yükleniyor...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">Veriler yükleniyor...</td></tr>`;
 
     try {
         const res = await fetch(`${API_BASE_URL}/api/payments`);
@@ -234,6 +215,11 @@ async function loadHistory() {
                 const money = formatMoney(pay.amount, pay.currency);
                 const shortId = pay.paymentId.length > 12 ? '...' + pay.paymentId.slice(-8) : pay.paymentId;
 
+                // PROVIDER ETİKETİ
+                const providerBadge = pay.provider === 'iyzico' 
+                    ? '<span style="background:#e0f2fe; color:#0284c7; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">IYZICO</span>' 
+                    : '<span style="background:#f3e8ff; color:#9333ea; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">MOCK</span>';
+
                 const row = `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
                         <td>
@@ -243,6 +229,7 @@ async function loadHistory() {
                             </button>
                         </td>
                         <td style="font-weight:600; font-size:0.85rem;">${money}</td>
+                        <td>${providerBadge}</td>
                         <td><span style="background:${statusColor}20; color:${statusColor}; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;">${statusText}</span></td>
                         <td style="color:#94a3b8; font-size: 0.75rem;">${date}</td>
                     </tr>
@@ -250,10 +237,10 @@ async function loadHistory() {
                 tbody.innerHTML += row;
             });
         } else {
-            tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#64748b;">Henüz işlem yok.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">Henüz işlem yok.</td></tr>';
         }
     } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="4" style="padding:20px; text-align:center; color:#ef4444;">Yükleme hatası!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#ef4444;">Yükleme hatası!</td></tr>';
     }
 }
 
