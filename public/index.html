@@ -27,213 +27,137 @@
             background: var(--bg-gradient);
             min-height: 100vh;
             color: var(--text-main);
-            padding: 20px;
+            padding: 40px 20px;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
         }
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 20px;
+            grid-template-columns: 1.3fr 0.8fr;
+            gap: 25px;
             align-items: start;
+            margin-top: 2vh;
         }
 
-        /* SOL PANEL - FORM ALANI */
         .main-card {
             background: var(--card-bg);
             border-radius: var(--radius);
-            padding: 30px;
+            padding: 35px;
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
-            min-height: 500px; /* Tablo uzarsa diye */
-        }
-
-        .header {
-            margin-bottom: 25px;
+            min-height: 540px;
+            height: auto;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            position: relative;
         }
 
+        .header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .brand h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
         .brand span { color: var(--primary); }
         .brand p { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
 
-        .lang-switch {
-            background: #f1f5f9;
-            padding: 4px;
-            border-radius: 8px;
-            display: flex;
-        }
-
-        .lang-btn {
-            border: none;
-            background: none;
-            padding: 6px 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-light);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
+        .lang-switch { background: #f1f5f9; padding: 4px; border-radius: 8px; display: flex; }
+        .lang-btn { border: none; background: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; color: var(--text-light); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .lang-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        /* TABS */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 10px;
-            overflow-x: auto; /* Mobilde taşarsa */
-        }
-
-        .tab {
-            background: none;
-            border: none;
-            padding: 8px 16px;
-            color: var(--text-light);
-            font-weight: 500;
-            cursor: pointer;
-            position: relative;
-            transition: 0.3s;
-            white-space: nowrap;
-        }
-
+        .tabs { display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; overflow-x: auto; flex-shrink: 0; }
+        .tab { background: none; border: none; padding: 8px 10px; color: var(--text-light); font-weight: 500; cursor: pointer; position: relative; transition: 0.3s; white-space: nowrap; font-size: 0.95rem;}
         .tab.active { color: var(--primary); font-weight: 600; }
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: -12px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--primary);
-        }
+        .tab.active::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 2px; background: var(--primary); }
 
-        /* FORMS */
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-main); margin-bottom: 6px; }
+        .content-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px; }
+        input { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
         
-        input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .input-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
-
-        button.btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-
+        button.btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
 
-        /* SAĞ PANEL - ÖNİZLEME & LOG */
-        .side-panel {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .credit-card {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            border-radius: var(--radius);
-            padding: 25px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3);
-            aspect-ratio: 1.58/1;
-        }
-
-        .card-chip {
-            width: 40px;
-            height: 30px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
+        .side-panel { display: flex; flex-direction: column; gap: 25px; position: sticky; top: 20px; }
+        .credit-card { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border-radius: var(--radius); padding: 25px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3); aspect-ratio: 1.58/1; }
+        .card-chip { width: 40px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .card-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 20px; }
         .card-info { display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
         .card-name { font-weight: 600; }
 
-        /* API RESPONSE AREA */
-        .api-log {
-            background: #0f172a;
-            border-radius: var(--radius);
-            padding: 20px;
-            color: #22d3ee;
-            font-family: 'Courier New', monospace;
-            font-size: 0.8rem;
-            min-height: 200px;
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid #334155;
-        }
-
+        .api-log { background: #0f172a; border-radius: var(--radius); padding: 20px; color: #22d3ee; font-family: 'Courier New', monospace; font-size: 0.8rem; height: 280px; overflow-y: auto; border: 1px solid #334155; }
         .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
         .log-success { color: var(--success); }
         .log-error { color: var(--error); }
         .log-label { color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px; }
 
-        /* COPY BUTTON */
-        .copy-group { position: relative; }
-        .copy-btn {
-            position: absolute;
-            right: 8px;
-            top: 36px;
-            background: #f1f5f9;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            cursor: pointer;
-            color: var(--text-light);
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: #64748b; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; padding: 10px;}
+        td { padding: 16px 10px; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
+        tr:hover td { background-color: #f8fafc; color: var(--primary-dark); }
+
+        /* TOAST (ALERT) STİLİ - DÜZELTİLMİŞ */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            border-radius: 50px;
+            padding: 16px 24px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 0.95rem;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 500;
         }
+
+        #toast.show {
+            visibility: visible;
+            animation-name: fadein, fadeout;
+            animation-duration: 0.5s, 0.5s;
+            animation-delay: 0s, 2.5s;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        @keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(5px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        .copy-btn { background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; color: var(--text-light); float: right; }
         .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
 
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-
         /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         @media (max-width: 768px) {
             .container { grid-template-columns: 1fr; }
-            .side-panel { order: -1; } 
+            .side-panel { order: -1; position: static; }
+            .main-card { min-height: auto; }
         }
     </style>
 </head>
@@ -241,10 +165,7 @@
     <div class="container">
         <div class="main-card">
             <div class="header">
-                <div class="brand">
-                    <h1>Payment<span>API</span></h1>
-                    <p>Developer Dashboard</p>
-                </div>
+                <div class="brand"><h1>Payment<span>API</span></h1><p>Developer Dashboard</p></div>
                 <div class="language-switcher lang-switch">
                     <button class="lang-btn active" data-lang="tr">TR</button>
                     <button class="lang-btn" data-lang="en">EN</button>
@@ -257,66 +178,60 @@
                 <button class="tab" data-tab="history" data-tr="İşlem Geçmişi" data-en="History" onclick="loadHistory()">İşlem Geçmişi</button>
             </div>
 
-            <div id="paymentTab" class="tab-content active">
-                <form id="paymentForm">
-                    <div class="form-group">
-                        <label data-tr="Tutar (TRY)" data-en="Amount (TRY)">Tutar (TRY)</label>
-                        <input type="number" id="amount" name="amount" placeholder="150.00" step="0.01" min="1" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label data-tr="Açıklama" data-en="Description">Açıklama</label>
-                        <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
-                        <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://app.bubble.io/api/1.1/wf/payment_success">
-                        <div class="input-hint" data-tr="Bubble Backend Workflow URL'nizi buraya yapıştırın." data-en="Paste your Bubble Backend Workflow URL here.">Bubble Backend Workflow URL'nizi buraya yapıştırın.</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label data-tr="Kart Sahibi" data-en="Card Holder">Kart Sahibi</label>
-                        <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required onkeyup="updateCardPreview(this.value)">
-                    </div>
-
-                    <div class="form-group">
-                        <label>E-Mail</label>
-                        <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
-                    </div>
-
-                    <button type="submit" class="btn-primary" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur</button>
-                </form>
-            </div>
-
-            <div id="statusTab" class="tab-content">
-                <div class="form-group copy-group">
-                    <label>Payment ID</label>
-                    <input type="text" id="paymentId" placeholder="pay_..." style="font-family: monospace;">
-                    <button type="button" class="copy-btn" onclick="copyToClipboard('paymentId')">Kopyala</button>
+            <div class="content-wrapper">
+                <div id="paymentTab" class="tab-content active">
+                    <form id="paymentForm">
+                        <div class="form-group">
+                            <label data-tr="Tutar (TRY)" data-en="Amount (TRY)">Tutar (TRY)</label>
+                            <input type="text" id="amount" name="amount" placeholder="150,00" inputmode="decimal" required oninput="formatAmountInput(this)">
+                        </div>
+                        <div class="form-group">
+                            <label data-tr="Açıklama" data-en="Description">Açıklama</label>
+                            <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
+                            <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://app.bubble.io/api/1.1/wf/payment_success">
+                        </div>
+                        <div class="form-group">
+                            <label data-tr="Kart Sahibi" data-en="Card Holder">Kart Sahibi</label>
+                            <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required onkeyup="updateCardPreview(this.value)">
+                        </div>
+                        <div class="form-group">
+                            <label>E-Mail</label>
+                            <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
+                        </div>
+                        <button type="submit" class="btn-primary" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur</button>
+                    </form>
                 </div>
-                <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durumu Kontrol Et" data-en="Check Status">Durumu Kontrol Et</button>
-            </div>
 
-            <div id="historyTab" class="tab-content">
-                <div style="overflow-x: auto; margin-bottom:10px;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                <div id="statusTab" class="tab-content">
+                    <div class="form-group" style="position:relative;">
+                        <label>Payment ID</label>
+                        <input type="text" id="paymentId" placeholder="pay_..." style="font-family: monospace; padding-right: 60px;">
+                        <button type="button" class="copy-btn" style="position:absolute; right:10px; top:35px;" onclick="copyToClipboard('paymentId')">Kopyala</button>
+                    </div>
+                    <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durumu Kontrol Et" data-en="Check Status">Durumu Kontrol Et</button>
+                </div>
+
+                <div id="historyTab" class="tab-content">
+                    <table style="width: 100%;">
                         <thead>
-                            <tr style="border-bottom: 2px solid #e2e8f0; color: #64748b;">
-                                <th style="padding: 12px 8px;">ID</th>
-                                <th style="padding: 12px 8px;">Tutar</th>
-                                <th style="padding: 12px 8px;">Durum</th>
-                                <th style="padding: 12px 8px;">Tarih</th>
+                            <tr>
+                                <th style="width: 120px;">ID</th>
+                                <th>Tutar</th>
+                                <th>Durum</th>
+                                <th>Tarih</th>
                             </tr>
                         </thead>
                         <tbody id="historyList">
                             <tr><td colspan="4" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
                         </tbody>
                     </table>
+                    <br>
+                    <button class="btn-primary" onclick="loadHistory()" style="width: auto; padding: 8px 16px; font-size: 0.85rem; float:right;">🔄 Yenile</button>
                 </div>
-                <button class="btn-primary" onclick="loadHistory()" style="width: auto; padding: 10px 20px; font-size: 0.9rem; float:right;">🔄 Yenile</button>
             </div>
-
         </div>
 
         <div class="side-panel">
@@ -328,15 +243,13 @@
                     <div class="card-date">12/28</div>
                 </div>
             </div>
-
             <div class="api-log" id="apiResponse">
-                <div class="log-entry">
-                    <span class="log-label">SYSTEM</span>
-                    Ready for requests...
-                </div>
+                <div class="log-entry"><span class="log-label">SYSTEM</span>Ready for requests...</div>
             </div>
         </div>
     </div>
+
+    <div id="toast">Mesaj buraya gelecek</div>
 
     <script src="/demo.js"></script>
 </body>
