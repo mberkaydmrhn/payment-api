@@ -1,34 +1,82 @@
-// public/demo.js - AUTH SİSTEMLİ FİNAL
 const API_BASE_URL = window.location.origin;
 
-// ==================== GLOBAL DEĞİŞKENLER ====================
+// Global State
 let userApiKey = null;
 let userEmail = null;
+let currentLang = localStorage.getItem('PAYMINT_LANG') || 'tr'; // Varsayılan dil
 
-// ==================== 1. INPUT FORMATLAMA (KESİN ÇÖZÜM) ====================
-function formatAmountInput(input) {
-    let val = input.value;
-    val = val.replace(/\./g, ',');
-    val = val.replace(/[^0-9,]/g, '');
-    const parts = val.split(',');
-    let integerPart = parts[0];
-    if (integerPart.length > 1 && integerPart.startsWith('0')) {
-        integerPart = integerPart.substring(1);
+// ==================== 1. DİL YÖNETİMİ (UI FIX) ====================
+
+const translations = {
+    tr: {
+        amountError: "Lütfen tutar girin",
+        invalidAmount: "Geçersiz Tutar!",
+        apiKeyMissing: "API Key bulunamadı. Lütfen giriş yapın.",
+        processing: "İşleniyor...",
+        success: "Başarılı! Yönlendiriliyor...",
+        copy: "Kopyalandı!",
+        logout: "Oturum kapatıldı.",
+        welcome: "Oturum açıldı."
+    },
+    en: {
+        amountError: "Please enter an amount",
+        invalidAmount: "Invalid Amount!",
+        apiKeyMissing: "API Key missing. Please login.",
+        processing: "Processing...",
+        success: "Success! Redirecting...",
+        copy: "Copied!",
+        logout: "Logged out.",
+        welcome: "Logged in."
     }
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    if (parts.length > 1) {
-        let decimalPart = parts[1].substring(0, 2);
-        input.value = `${integerPart},${decimalPart}`;
-    } else if (val.indexOf(',') > -1) {
-        input.value = `${integerPart},`;
-    } else {
-        input.value = integerPart;
-    }
+};
+
+function changeLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('PAYMINT_LANG', lang);
+
+    // 1. Butonların aktiflik durumunu güncelle
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        if (btn.dataset.lang === lang) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // 2. Sayfadaki metinleri güncelle (data-tr / data-en)
+    document.querySelectorAll('[data-tr]').forEach(el => {
+        const text = el.getAttribute(`data-${lang}`);
+        if (text) {
+            if (el.tagName === 'INPUT') {
+                // Input ise placeholder'ı değiştir
+                el.placeholder = text;
+            } else {
+                // Normal text
+                el.innerText = text;
+            }
+        }
+    });
+    
+    // Log'a bilgi düş (Opsiyonel)
+    // addLog(`Language switched to ${lang.toUpperCase()}`);
 }
 
 // ==================== 2. YARDIMCI FONKSİYONLAR ====================
+
+function formatAmountInput(input) {
+    let val = input.value.replace(/\./g, ',').replace(/[^0-9,]/g, '');
+    const parts = val.split(',');
+    let integerPart = parts[0];
+    if (integerPart.length > 1 && integerPart.startsWith('0')) integerPart = integerPart.substring(1);
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    if (parts.length > 1) input.value = `${integerPart},${parts[1].substring(0, 2)}`;
+    else input.value = val.indexOf(',') > -1 ? `${integerPart},` : integerPart;
+}
+
 function formatMoney(amount, currency) {
-    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: currency }).format(amount);
+    // Para birimine göre formatlama
+    try {
+        return new Intl.NumberFormat(currentLang === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency: currency }).format(amount);
+    } catch (e) {
+        return amount + ' ' + currency;
+    }
 }
 
 function showToast(message) {
@@ -40,19 +88,18 @@ function showToast(message) {
     }
 }
 
-function copyText(text) {
-    navigator.clipboard.writeText(text);
-    showToast(`Kopyalandı: ${text.substring(0, 15)}...`);
-}
-
 function copyToClipboard(elementId) {
     const el = document.getElementById(elementId);
-    if(el && el.value) copyText(el.value);
+    if(el && el.value) {
+        navigator.clipboard.writeText(el.value);
+        showToast(translations[currentLang].copy);
+    }
 }
 
-// ==================== 3. DİL & UI ====================
-function changeLanguage(lang) { /* ... (Bu fonksiyon değişmedi, aynı kalabilir) ... */ }
-function updateCardPreview(name) { /* ... (Bu fonksiyon değişmedi) ... */ }
+function updateCardPreview(name) {
+    const display = document.getElementById('cardHolderDisplay');
+    if(display) display.innerText = name.toUpperCase() || 'AD SOYAD';
+}
 
 function addLog(message, type = 'info') {
     const logContainer = document.getElementById('apiResponse');
@@ -74,7 +121,8 @@ function changeTab(tabName) {
     if(btn) btn.classList.add('active');
 }
 
-// ==================== 4. AUTH (YENİ) ====================
+// ==================== 3. AUTH SİSTEMİ ====================
+
 function toggleAuthTab(tabName) {
     if (tabName === 'login') {
         document.getElementById('loginForm').style.display = 'block';
@@ -95,12 +143,6 @@ function showAuthError(form, message) {
     errorEl.style.display = 'block';
 }
 
-function showAuthSuccess(message) {
-    const successEl = document.getElementById('registerSuccess');
-    successEl.innerText = message;
-    successEl.style.display = 'block';
-}
-
 function showDashboard(key, email) {
     userApiKey = key;
     userEmail = email;
@@ -111,7 +153,11 @@ function showDashboard(key, email) {
     document.getElementById('dashboardContainer').style.display = 'grid';
     document.getElementById('apiKeyDisplay').value = key;
     document.getElementById('userEmailDisplay').innerText = email;
-    addLog("Oturum açıldı, API Key yüklendi.", "success");
+    
+    addLog(translations[currentLang].welcome, "success");
+    
+    // Sayfa yüklendiğinde dili uygula
+    changeLanguage(currentLang);
 }
 
 function handleLogout() {
@@ -121,34 +167,32 @@ function handleLogout() {
     userEmail = null;
     document.getElementById('authContainer').style.display = 'block';
     document.getElementById('dashboardContainer').style.display = 'none';
-    showToast("Oturum kapatıldı.");
+    showToast(translations[currentLang].logout);
 }
 
-// ==================== 5. API İŞLEMLERİ (GÜNCELLENDİ) ====================
+// ==================== 4. API ETKİLEŞİMLERİ ====================
 
 async function processPayment(event) {
     event.preventDefault();
-    
-    if (!userApiKey) {
-        showToast("API Key bulunamadı. Lütfen tekrar giriş yapın.");
-        return;
-    }
+    if (!userApiKey) { showToast(translations[currentLang].apiKeyMissing); return; }
 
-    addLog('Ödeme isteği oluşturuluyor...', 'info');
+    addLog(currentLang === 'tr' ? 'Ödeme isteği gönderiliyor...' : 'Sending payment request...', 'info');
     const formData = new FormData(event.target);
     
     let rawAmount = document.getElementById('amount').value;
-    if (!rawAmount) { showToast("Lütfen tutar girin"); return; }
-    rawAmount = rawAmount.replace(/\./g, '');
-    rawAmount = rawAmount.replace(',', '.');
+    if (!rawAmount) { showToast(translations[currentLang].amountError); return; }
+    
+    // Tutarı temizle (1.500,50 -> 1500.50)
+    rawAmount = rawAmount.replace(/\./g, '').replace(',', '.');
     const cleanAmount = parseFloat(rawAmount);
 
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
-        showToast("Geçersiz Tutar!"); return;
+        showToast(translations[currentLang].invalidAmount); return;
     }
 
     const paymentData = {
         amount: cleanAmount,
+        currency: formData.get('currency'),
         description: formData.get('description'),
         webhookUrl: formData.get('webhookUrl'),
         returnUrl: window.location.href,
@@ -164,160 +208,148 @@ async function processPayment(event) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'x-api-key': userApiKey // <--- API KEY BURADA GÖNDERİLİYOR
+                'x-api-key': userApiKey
             },
             body: JSON.stringify(paymentData)
         });
         const result = await response.json();
         
         if (result.success) {
-            addLog(`✅ Ödeme ID: ${result.data.paymentId}`, 'success');
-            const pIdInput = document.getElementById('paymentId');
-            if(pIdInput) pIdInput.value = result.data.paymentId;
-            showToast("Link Oluşturuldu! Yönlendiriliyor...");
+            addLog(`✅ ID: ${result.data.paymentId}`, 'success');
+            document.getElementById('paymentId').value = result.data.paymentId;
+            showToast(translations[currentLang].success);
+            // Yönlendir
             setTimeout(() => { window.location.href = result.data.paymentUrl; }, 1500);
         } else {
-            addLog(`❌ Hata: ${result.error.message}`, 'error');
-            showToast(`Hata: ${result.error.message}`);
+            addLog(`❌ Error: ${result.error.message}`, 'error');
+            showToast(result.error.message);
         }
     } catch (error) {
-        addLog(`❌ Bağlantı Hatası: ${error.message}`, 'error');
+        addLog(`❌ Network Error: ${error.message}`, 'error');
     }
 }
 
 async function checkPaymentStatus() {
     const id = document.getElementById('paymentId').value;
-    if (!id) { showToast("Lütfen Payment ID girin"); return; }
-    if (!userApiKey) { showToast("API Key bulunamadı."); return; }
+    if (!id) { showToast("ID required"); return; }
 
-    addLog(`🔍 Sorgulanıyor: ${id}`, 'info');
     try {
-        const res = await fetch(`${API_BASE_URL}/api/payments/${id}/status`, {
-            headers: { 'x-api-key': userApiKey } // <--- API KEY GEREKLİ
-        });
+        const res = await fetch(`${API_BASE_URL}/api/payments/${id}/status`);
         const data = await res.json();
         if(data.success) {
             const formattedAmount = formatMoney(data.data.amount, data.data.currency);
-            addLog(`📊 Durum: ${data.data.status.toUpperCase()} | Tutar: ${formattedAmount}`, 'success');
+            addLog(`📊 ${data.data.status.toUpperCase()} | ${formattedAmount}`, 'success');
         } else {
-            addLog('Kayıt bulunamadı.', 'error');
+            addLog('Not Found', 'error');
         }
-    } catch(e) { addLog('Sorgulama hatası', 'error'); }
+    } catch(e) { addLog('Error checking status', 'error'); }
 }
 
 async function loadHistory() {
-    if (!userApiKey) { showToast("API Key bulunamadı."); return; }
+    if (!userApiKey) return;
     
     const tbody = document.getElementById('historyList');
-    tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">Veriler yükleniyor...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Loading...</td></tr>`;
 
     try {
         const res = await fetch(`${API_BASE_URL}/api/payments`, {
-             headers: { 'x-api-key': userApiKey } // <--- API KEY GEREKLİ
+             headers: { 'x-api-key': userApiKey }
         });
         const data = await res.json();
 
         if(data.success && data.data.length > 0) {
             tbody.innerHTML = '';
             data.data.forEach(pay => {
-                const date = new Date(pay.createdAt).toLocaleDateString('tr-TR') + ' ' + new Date(pay.createdAt).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'});
-                let statusColor = '#f59e0b'; let statusText = 'BEKLİYOR';
-                if(pay.status === 'paid') { statusColor = '#10b981'; statusText = 'ÖDENDİ'; }
-                if(pay.status === 'failed') { statusColor = '#ef4444'; statusText = 'HATA'; }
+                const date = new Date(pay.createdAt).toLocaleString(currentLang === 'tr' ? 'tr-TR' : 'en-US');
+                let color = pay.status === 'paid' ? '#10b981' : (pay.status === 'failed' ? '#ef4444' : '#f59e0b');
                 const money = formatMoney(pay.amount, pay.currency);
-                const shortId = pay.paymentId.length > 12 ? '...' + pay.paymentId.slice(-8) : pay.paymentId;
-                const providerBadge = pay.provider === 'iyzico' ? '<span style="background:#e0f2fe; color:#0284c7; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">IYZICO</span>' : (pay.provider === 'stripe' ? '<span style="background:#e0fdf4; color:#065f46; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">STRIPE</span>' : '<span style="background:#f3e8ff; color:#9333ea; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">MOCK</span>');
+                
                 const row = `
                     <tr style="border-bottom: 1px solid #f1f5f9;">
-                        <td><button onclick="copyText('${pay.paymentId}')" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #6366f1; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.75rem;">${shortId} ❐</button></td>
-                        <td style="font-weight:600; font-size:0.85rem;">${money}</td>
-                        <td>${providerBadge}</td>
-                        <td><span style="background:${statusColor}20; color:${statusColor}; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;">${statusText}</span></td>
-                        <td style="color:#94a3b8; font-size: 0.75rem;">${date}</td>
+                        <td><button onclick="copyToClipboard('pid_${pay.paymentId}')" style="cursor:pointer; border:none; background:none; color:#6366f1; font-family:monospace;">${pay.paymentId.slice(-6)}..</button><input type="hidden" id="pid_${pay.paymentId}" value="${pay.paymentId}"></td>
+                        <td style="font-weight:600;">${money}</td>
+                        <td><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:0.8rem;">${pay.provider.toUpperCase()}</span></td>
+                        <td><span style="color:${color}; font-weight:700;">${pay.status.toUpperCase()}</span></td>
+                        <td style="font-size:0.75rem; color:#94a3b8;">${date}</td>
                     </tr>`;
                 tbody.innerHTML += row;
             });
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">Henüz işlem yok.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No transactions found.</td></tr>';
         }
     } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#ef4444;">Yükleme hatası!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error loading history.</td></tr>';
     }
 }
 
-// ==================== 6. BAŞLATMA (GÜNCELLENDİ) ====================
+// ==================== 5. BAŞLATMA ====================
+
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // Auth Formları
+    // Form Listener'ları
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
     const logoutButton = document.getElementById('logoutButton');
+    const paymentForm = document.getElementById('paymentForm');
 
     if(loginForm) loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, { 
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) 
         });
         const data = await res.json();
-        if (data.success) {
-            showDashboard(data.data.apiKey, data.data.email);
-        } else {
-            showAuthError('login', data.message);
-        }
+        if (data.success) showDashboard(data.data.apiKey, data.data.email);
+        else showAuthError('login', data.message);
     });
 
     if(registerForm) registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
-        const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+        const res = await fetch(`${API_BASE_URL}/api/auth/register`, { 
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) 
         });
         const data = await res.json();
-        if (data.success) {
-            showAuthSuccess('Kayıt başarılı! Lütfen giriş yapın.');
-            toggleAuthTab('login');
-        } else {
-            showAuthError('register', data.message);
+        if (data.success) { 
+            showToast(currentLang === 'tr' ? 'Kayıt Başarılı' : 'Registration Successful'); 
+            toggleAuthTab('login'); 
         }
+        else showAuthError('register', data.message);
     });
     
     if(logoutButton) logoutButton.addEventListener('click', handleLogout);
-
-    // Dashboard Formları
-    const paymentForm = document.getElementById('paymentForm');
     if(paymentForm) paymentForm.addEventListener('submit', processPayment);
     
+    // Tab Geçişleri
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() { changeTab(this.getAttribute('data-tab')); });
     });
     
-    // OTURUM KONTROLÜ
+    // Oturum Kontrolü
     const savedKey = localStorage.getItem('PAYMINT_API_KEY');
     const savedEmail = localStorage.getItem('PAYMINT_USER_EMAIL');
+    
+    // Dili Yükle
+    changeLanguage(currentLang);
+
     if (savedKey && savedEmail) {
         showDashboard(savedKey, savedEmail);
     } else {
         document.getElementById('authContainer').style.display = 'block';
     }
     
-    // Ödeme dönüşü kontrolü
+    // URL Durum Kontrolü (Ödeme Dönüşü)
     const urlParams = new URLSearchParams(window.location.search);
-    const status = urlParams.get('status');
-    if (status && savedKey) {
-        showToast(status === 'success' ? 'Ödeme Başarılı!' : 'Ödeme Başarısız');
-        addLog(status === 'success' ? '✅ Ödeme Tamamlandı' : '❌ Ödeme İptal', status === 'success' ? 'success' : 'error');
+    if (urlParams.get('status') && savedKey) {
+        const isSuccess = urlParams.get('status') === 'success';
+        showToast(isSuccess ? (currentLang === 'tr' ? 'Ödeme Başarılı!' : 'Payment Successful!') : (currentLang === 'tr' ? 'Ödeme Başarısız' : 'Payment Failed'));
+        
+        // URL'i temizle
         window.history.replaceState({}, document.title, "/");
+        
+        // Geçmişe git ve yenile
         changeTab('history');
         loadHistory();
-    } else if (status) {
-        // Ödeme dönüşü var ama login olmamış, ana sayfaya at
-        window.history.replaceState({}, document.title, "/");
     }
 });
