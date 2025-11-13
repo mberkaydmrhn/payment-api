@@ -1,6 +1,6 @@
-// src/middleware/validator.js
 const { z } = require('zod');
 
+// Ödeme Oluşturma Şeması
 const createPaymentSchema = z.object({
     amount: z.preprocess(
         (val) => Number(val),
@@ -19,7 +19,7 @@ const createPaymentSchema = z.object({
         .max(100, "Açıklama çok uzun")
         .regex(/^[a-zA-Z0-9\sğüşıöçĞÜŞİÖÇ.,-]+$/, "Açıklamada geçersiz karakterler var"),
 
-    provider: z.enum(['iyzico', 'stripe', 'mock']),
+    provider: z.enum(['iyzico', 'stripe', 'mock']).default('mock'),
 
     customerInfo: z.object({
         name: z.string().min(3, "İsim en az 3 karakter olmalı"),
@@ -32,24 +32,41 @@ const createPaymentSchema = z.object({
 
 const validatePayment = (req, res, next) => {
     try {
-        if (!req.body) throw new Error("İstek gövdesi (body) boş gönderilemez.");
+        // 1. Body kontrolü
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new Error("İstek gövdesi (body) boş olamaz.");
+        }
 
+        // 2. Zod ile doğrulama
         const validData = createPaymentSchema.parse(req.body);
+        
+        // 3. Temiz veriyi kaydet
         req.body = validData;
         next();
 
     } catch (error) {
-        let errorMessage = "Bilinmeyen doğrulama hatası";
+        let errorMessage = "Doğrulama hatası";
 
+        // HATA AYIKLAMA: Gelen hatanın türüne göre mesaj oluştur
         if (error instanceof z.ZodError) {
-            errorMessage = error.errors.map(e => e.message).join(', ');
-        } else if (error.message) {
+            // Zod hatasıysa detayları birleştir
+            errorMessage = error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        } else if (error instanceof Error) {
+            // Standart hataysa mesajı al
             errorMessage = error.message;
+        } else {
+            // Bilinmeyen bir şeyse
+            errorMessage = String(error);
         }
+
+        console.error("❌ Validation Error:", errorMessage);
 
         return res.status(400).json({
             success: false,
-            error: { code: 'VALIDATION_ERROR', message: errorMessage }
+            error: { 
+                code: 'VALIDATION_ERROR', 
+                message: errorMessage 
+            }
         });
     }
 };

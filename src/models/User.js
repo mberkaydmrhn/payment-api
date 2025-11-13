@@ -1,4 +1,3 @@
-// src/models/User.js
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
@@ -15,14 +14,23 @@ const UserSchema = new mongoose.Schema({
     type: String, 
     unique: true 
   },
+  // --- YENİ ALANLAR ---
   plan: {
     type: String,
-    enum: ['free', 'starter', 'pro'],
+    enum: ['free', 'pro', 'enterprise'],
     default: 'free'
   },
   usage: {
     type: Number,
     default: 0
+  },
+  usageLimit: {
+    type: Number,
+    default: 10 // Ücretsiz plan limiti
+  },
+  lastResetDate: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true

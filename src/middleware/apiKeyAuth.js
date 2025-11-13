@@ -1,41 +1,50 @@
-// src/middleware/apiKeyAuth.js
 const User = require('../models/User');
 
 const apiKeyAuth = async (req, res, next) => {
-  // Header'dan x-api-key'i al
   const apiKey = req.headers['x-api-key'];
 
-  // DEMO İSTİSNASI: Eğer istek bizim Demo sayfasından geliyorsa (Origin kontrolü) veya
-  // özel bir 'demo_key' kullanılıyorsa izin ver.
-  // Şimdilik basit tutalım: Eğer API Key yoksa hata ver.
-  
   if (!apiKey) {
-    return res.status(401).json({ 
-      success: false, 
-      error: { code: 'NO_API_KEY', message: 'API Anahtarı (x-api-key) eksik.' } 
-    });
+    return res.status(401).json({ success: false, error: { code: 'NO_API_KEY', message: 'API Anahtarı (x-api-key) eksik.' } });
   }
 
   try {
-    // Veritabanında bu anahtara sahip kullanıcı var mı?
     const user = await User.findOne({ apiKey });
 
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        error: { code: 'INVALID_API_KEY', message: 'Geçersiz API Anahtarı.' } 
-      });
+      return res.status(401).json({ success: false, error: { code: 'INVALID_API_KEY', message: 'Geçersiz API Anahtarı.' } });
     }
 
-    // Kullanıcıyı request'e ekle (Route'larda kullanabiliriz)
-    req.user = user;
+    // --- KOTA SIFIRLAMA ---
+    const now = new Date();
+    const lastReset = user.lastResetDate ? new Date(user.lastResetDate) : new Date();
+    const daysSinceReset = (now - lastReset) / (1000 * 60 * 60 * 24);
     
-    // Kullanım sayısını artır (Analytics için)
-    user.usage += 1;
-    await user.save();
+    if (daysSinceReset >= 30) {
+        user.usage = 0;
+        user.lastResetDate = now;
+        await user.save();
+    }
 
-    next(); // Devam et
+    // --- KOTA KONTROLÜ (SADECE BAK, DOKUNMA) ---
+    if (req.path.includes('/create')) {
+        const limit = user.usageLimit || 10; // Varsayılan limit
+        if (user.usage >= limit) {
+            return res.status(402).json({
+                success: false,
+                error: { 
+                    code: 'QUOTA_EXCEEDED', 
+                    message: `Aylık işlem limitiniz (${limit}) doldu. Lütfen paketinizi yükseltin.` 
+                }
+            });
+        }
+        // 🔥 BURADAKİ 'user.usage += 1' SATIRINI SİLDİK! 🔥
+    }
+
+    req.user = user; // User'ı request'e ekle ki route içinde kullanabilelim
+    next();
+
   } catch (error) {
+    console.error("Auth Middleware Hatası:", error);
     res.status(500).json({ success: false, message: 'Auth Error' });
   }
 };

@@ -1,0 +1,21 @@
+{
+  "name": "PayMint Dashboard",
+  "short_name": "PayMint",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f111a",
+  "theme_color": "#6366f1",
+  "description": "Secure Payment Gateway Developer Console",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10479/10479959.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10479/10479959.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
