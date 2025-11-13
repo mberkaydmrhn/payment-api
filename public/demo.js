@@ -3,10 +3,11 @@ let userApiKey = null;
 let userEmail = null;
 let currentLang = localStorage.getItem('PAYMINT_LANG') || 'tr';
 
-// --- LANGUAGE DICTIONARY ---
 const translations = {
-    tr: { amountError: "Lütfen tutar girin", invalidAmount: "Geçersiz Tutar!", apiKeyMissing: "API Key bulunamadı.", processing: "İşleniyor...", success: "Başarılı! Yönlendiriliyor...", copy: "Kopyalandı!", logout: "Oturum kapatıldı.", welcome: "Oturum açıldı." },
-    en: { amountError: "Please enter an amount", invalidAmount: "Invalid Amount!", apiKeyMissing: "API Key missing.", processing: "Processing...", success: "Success! Redirecting...", copy: "Copied!", logout: "Logged out.", welcome: "Logged in." }
+    tr: { amountError: "Lütfen tutar girin", invalidAmount: "Geçersiz Tutar!", apiKeyMissing: "API Key bulunamadı.", processing: "İşleniyor...", success: "Başarılı! Yönlendiriliyor...", copy: "Kopyalandı!", logout: "Oturum kapatıldı.", welcome: "Oturum açıldı.", 
+          id: "ID", amount: "Tutar", provider: "Altyapı", status: "Durum" }, // Eklenen Çeviriler
+    en: { amountError: "Please enter an amount", invalidAmount: "Invalid Amount!", apiKeyMissing: "API Key missing.", processing: "Processing...", success: "Success! Redirecting...", copy: "Copied!", logout: "Logged out.", welcome: "Logged in.",
+          id: "ID", amount: "Amount", provider: "Provider", status: "Status" }
 };
 
 // --- LANGUAGE HANDLER ---
@@ -14,27 +15,25 @@ function changeLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('PAYMINT_LANG', lang);
     
-    // Update Buttons
     document.querySelectorAll('.lang-btn').forEach(btn => {
         if (btn.dataset.lang === lang) btn.classList.add('active');
         else btn.classList.remove('active');
     });
 
-    // Update Text Elements
     document.querySelectorAll('[data-tr]').forEach(el => {
         const text = el.getAttribute(`data-${lang}`);
         if (text) {
             if (el.tagName === 'INPUT') el.placeholder = text;
             else if(el.childNodes.length > 1 && el.tagName === 'BUTTON') {
-                // Iconlu butonlar için sadece text node'u güncellemek gerekebilir
-                // Basit çözüm: innerHTML'i bozmamak için span varsa ona, yoksa direkt elemana yaz
                 const span = el.querySelector('span');
-                if(span) span.innerText = text;
-                else el.innerText = text; // İkon yoksa
+                if(span) span.innerText = text; else el.innerText = text;
             }
             else el.innerText = text;
         }
     });
+    
+    // Dili değiştirdiysek tabloyu da yeniden render et (başlıklar için)
+    if (userApiKey) loadHistory();
 }
 
 // --- 3D TILT EFFECT ---
@@ -61,7 +60,6 @@ function updateCardName(val) {
     document.getElementById('cardNameDisplay').innerText = val.toUpperCase() || 'YOUR NAME';
 }
 
-// --- PROVIDER SELECTION ---
 function selectProvider(val, el) {
     document.getElementById('selectedProvider').value = val;
     document.querySelectorAll('.provider-option').forEach(opt => opt.classList.remove('selected'));
@@ -88,38 +86,25 @@ function addLog(msg, type='info') {
 }
 
 function copyToClipboard(id) {
-    // Element input ise value, text ise innerText
     const el = document.getElementById(id);
     const val = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerText;
     navigator.clipboard.writeText(val);
     showToast(translations[currentLang].copy);
 }
 
-// Text kopyalama (History tablosu için)
 function copyText(text) {
     navigator.clipboard.writeText(text);
     showToast(translations[currentLang].copy);
 }
 
-// --- TUTAR FORMATLAMA (DÜZELTİLMİŞ VERSİYON) ---
 function formatAmountInput(input) {
     let val = input.value;
     if (!val) return;
-
-    // Noktaları sil (5.555 -> 5555)
     let cleanVal = val.replace(/\./g, ''); 
-
-    // Fazla virgülleri temizle
-    if ((cleanVal.match(/,/g) || []).length > 1) {
-        cleanVal = cleanVal.substring(0, cleanVal.lastIndexOf(','));
-    }
-
+    if ((cleanVal.match(/,/g) || []).length > 1) cleanVal = cleanVal.substring(0, cleanVal.lastIndexOf(','));
     let parts = cleanVal.split(',');
     let integerPart = parts[0].replace(/[^0-9]/g, ''); 
-
-    // Binlik ayracı ekle
     let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
     if (parts.length > 1) {
         let decimalPart = parts[1].replace(/[^0-9]/g, '').substring(0, 2);
         input.value = `${formattedInteger},${decimalPart}`;
@@ -133,7 +118,6 @@ function formatAmountInput(input) {
 function changeTab(tab) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById(tab + 'Tab').classList.add('active');
-    
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector(`button[data-tab="${tab}"]`).classList.add('active');
 }
@@ -152,8 +136,7 @@ function showDash(key, email) {
     document.getElementById('authContainer').style.display = 'none';
     document.getElementById('dashboardContainer').style.display = 'grid';
     document.getElementById('apiKeyDisplay').innerText = key;
-    
-    changeLanguage(currentLang); // Apply language
+    changeLanguage(currentLang);
     addLog(translations[currentLang].welcome, 'success');
 }
 
@@ -177,9 +160,7 @@ async function processPayment(e) {
 
     try {
         const res = await fetch(`${API_BASE_URL}/api/payments/create`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': userApiKey },
-            body: JSON.stringify(data)
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': userApiKey }, body: JSON.stringify(data)
         });
         const json = await res.json();
         if(json.success) {
@@ -210,19 +191,18 @@ async function loadHistory() {
                 if(p.status === 'pending') badge = 'style="color:#fbbf24; background:rgba(251,191,36,0.1)"';
                 if(p.status === 'failed') badge = 'style="color:#f87171; background:rgba(248,113,113,0.1)"';
                 
-                // ID'yi Kısalt
                 const shortId = p.paymentId.length > 12 ? p.paymentId.substring(0, 10) + '...' : p.paymentId;
 
                 const row = `<tr>
-                    <td>
+                    <td data-label="${translations[currentLang].id}">
                         <div class="id-wrapper">
                             <span class="id-text" title="${p.paymentId}">${shortId}</span>
                             <button class="copy-id-btn" onclick="copyText('${p.paymentId}')"><i class="ri-file-copy-line"></i></button>
                         </div>
                     </td>
-                    <td style="font-weight:600;">${p.amount} ${p.currency}</td>
-                    <td>${p.provider.toUpperCase()}</td>
-                    <td><span class="badge ${p.status === 'paid' ? 'badge-success' : ''}" ${badge}>${p.status.toUpperCase()}</span></td>
+                    <td data-label="${translations[currentLang].amount}" style="font-weight:600;">${p.amount} ${p.currency}</td>
+                    <td data-label="${translations[currentLang].provider}">${p.provider.toUpperCase()}</td>
+                    <td data-label="${translations[currentLang].status}"><span class="badge ${p.status === 'paid' ? 'badge-success' : ''}" ${badge}>${p.status.toUpperCase()}</span></td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
