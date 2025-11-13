@@ -2,7 +2,8 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <title>PayMint | Developer Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -28,7 +29,7 @@
             --radius: 24px;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
         
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -40,7 +41,7 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 20px; /* Mobilde kenar boşluğunu azalttık */
             overflow-x: hidden;
         }
 
@@ -48,9 +49,23 @@
             width: 100%;
             max-width: 1150px;
             display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 35px;
+            grid-template-columns: 1fr 360px; /* Masaüstünde yan yana */
+            gap: 25px;
             animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- MOBİL UYUM (MEDIA QUERY) --- */
+        @media (max-width: 900px) {
+            body { padding: 10px; }
+            .container { grid-template-columns: 1fr; gap: 20px; } /* Mobilde alt alta */
+            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header-actions { width: 100%; justify-content: space-between; margin-top: 10px; }
+            .provider-grid { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+            .side-panel { order: 2; } /* Mobilde en alta at */
+            
+            /* Tablolar mobilde taşmasın */
+            .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 500px; } 
         }
 
         .glass-card {
@@ -59,29 +74,24 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 35px;
+            padding: 25px; /* Mobilde biraz daha az padding */
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .brand { display: flex; align-items: center; gap: 12px; }
         .brand-icon { 
-            width: 45px; height: 45px; 
+            width: 40px; height: 40px; 
             background: linear-gradient(135deg, var(--primary), #ec4899);
             border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; color: white;
+            font-size: 1.4rem; color: white;
             box-shadow: 0 0 20px var(--primary-glow);
         }
-        .brand h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+        .brand h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
         .brand span { font-weight: 400; color: var(--text-muted); }
 
-        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
         
         .lang-switch {
             display: flex;
@@ -91,156 +101,93 @@
             border: 1px solid var(--border);
         }
         .lang-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 5px 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: 0.2s;
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 6px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            border-radius: 6px; transition: 0.2s;
         }
         .lang-btn.active { background: var(--primary); color: white; }
 
-        .provider-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
+        .provider-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .provider-option {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 16px;
+            padding: 12px; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
         }
-        .provider-option:hover { background: rgba(255,255,255,0.06); border-color: var(--text-muted); }
-        .provider-option.selected {
-            background: rgba(99, 102, 241, 0.1);
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
-        }
-        .provider-option i { font-size: 1.5rem; color: var(--text-muted); }
+        .provider-option.selected { background: rgba(99, 102, 241, 0.1); border-color: var(--primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+        .provider-option i { font-size: 1.4rem; color: var(--text-muted); }
         .provider-option.selected i { color: var(--primary); }
-        .provider-label { font-size: 0.85rem; font-weight: 600; }
+        .provider-label { font-size: 0.8rem; font-weight: 600; }
         #provider { display: none; }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; margin-left: 4px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; margin-left: 4px; }
         
         .input-group {
-            display: flex;
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 4px;
-            transition: 0.2s;
+            display: flex; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border);
+            border-radius: 14px; padding: 2px; transition: 0.2s;
         }
         .input-group:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 
         input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: white;
-            padding: 12px 16px;
-            font-size: 1rem;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            flex: 1; background: transparent; border: none; color: white; padding: 14px 16px; font-size: 1rem; font-family: 'Plus Jakarta Sans', sans-serif; width: 100%;
         }
         select.currency-select {
-            background: rgba(255,255,255,0.05);
-            border: none;
-            color: white;
-            border-radius: 10px;
-            padding: 0 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin: 4px;
+            background: rgba(255,255,255,0.05); border: none; color: white; border-radius: 10px;
+            padding: 0 15px; font-weight: 600; cursor: pointer; margin: 4px; height: auto;
         }
         select.currency-select option { background: #0f172a; color: white; }
 
         .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
-            color: white;
-            border: none;
-            padding: 18px;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 10px 30px -10px var(--primary-glow);
+            width: 100%; background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 30px -10px var(--primary-glow);
             display: flex; justify-content: center; align-items: center; gap: 8px;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px var(--primary-glow); }
+        .btn-primary:active { transform: scale(0.98); }
 
         .api-key-container {
-            background: rgba(0,0,0,0.2);
-            border-radius: 14px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid var(--border);
+            background: rgba(0,0,0,0.2); border-radius: 14px; padding: 10px 15px;
+            display: flex; align-items: center; gap: 10px; border: 1px solid var(--border); flex: 1;
         }
-        .api-key-text { font-family: 'Fira Code', monospace; color: var(--primary); font-weight: 600; letter-spacing: 1px; font-size: 0.9rem; }
+        .api-key-text { 
+            font-family: 'Fira Code', monospace; color: var(--primary); font-weight: 600; 
+            letter-spacing: 1px; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100px;
+        }
         
-        .card-container { perspective: 1000px; width: 100%; height: 220px; margin-bottom: 25px; }
+        .card-container { perspective: 1000px; width: 100%; height: 200px; margin-bottom: 25px; }
         .tilt-card {
             width: 100%; height: 100%; border-radius: 20px;
             background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
             position: relative; transform-style: preserve-3d;
             box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.5);
-            padding: 25px; display: flex; flex-direction: column; justify-content: space-between; color: white;
+            padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: white;
             transition: transform 0.1s ease-out;
         }
-        .tilt-card::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%);
-            border-radius: 20px; z-index: 2; pointer-events: none;
-        }
-
-        .tabs { display: flex; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; margin-bottom: 25px; }
-        .tab { flex: 1; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 8px; font-weight: 600; transition: 0.3s; display:flex; align-items:center; justify-content:center; gap:5px;}
+        
+        .tabs { display: flex; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; margin-bottom: 20px; overflow-x: auto; }
+        .tab { flex: 1; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 8px; font-weight: 600; transition: 0.3s; display:flex; align-items:center; justify-content:center; gap:5px; white-space: nowrap;}
         .tab.active { background: rgba(255,255,255,0.1); color: white; }
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
+        /* Table Scroll Wrapper */
+        .table-wrapper { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: var(--text-muted); font-size: 0.8rem; padding: 15px 10px; border-bottom: 1px solid var(--border); }
-        td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+        th { text-align: left; color: var(--text-muted); font-size: 0.8rem; padding: 12px 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
         
         .id-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0,0,0,0.2);
-            padding: 5px 10px;
-            border-radius: 6px;
-            width: fit-content;
-            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.2);
+            padding: 5px 10px; border-radius: 6px; width: fit-content; border: 1px solid var(--border);
         }
-        .id-text { font-family: 'Fira Code', monospace; color: var(--primary); font-size: 0.85rem; }
-        .copy-id-btn { 
-            background: none; border: none; color: var(--text-muted); cursor: pointer; 
-            display: flex; align-items: center; transition: 0.2s;
-        }
-        .copy-id-btn:hover { color: white; }
+        .id-text { font-family: 'Fira Code', monospace; color: var(--primary); font-size: 0.8rem; }
+        .copy-id-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; }
 
-        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; }
         .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
         
-        .console { background: #0a0c12; padding: 15px; border-radius: 16px; height: 300px; overflow-y: auto; font-family: 'Fira Code'; font-size: 0.8rem; border: 1px solid var(--border); }
+        .console { background: #0a0c12; padding: 15px; border-radius: 16px; height: 200px; overflow-y: auto; font-family: 'Fira Code'; font-size: 0.75rem; border: 1px solid var(--border); }
         .log-line { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; }
 
         #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: white; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 999; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4); font-weight: 500; }
@@ -249,9 +196,10 @@
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        #authContainer { width: 100%; max-width: 420px; margin: 10vh auto; }
-
-        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+        #authContainer { width: 100%; max-width: 420px; margin: 5vh auto; padding: 0 15px; }
+        
+        /* Side Panel Mobilde Alta Alınacak */
+        .side-panel { display: flex; flex-direction: column; gap: 20px; }
     </style>
 </head>
 <body>
@@ -259,7 +207,7 @@
     <div id="authContainer" style="display: none;">
         <div style="text-align:center; margin-bottom:40px;">
             <div style="width:70px; height:70px; margin:0 auto 20px; background:linear-gradient(135deg, var(--primary), #ec4899); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow: 0 0 30px var(--primary-glow);">🚀</div>
-            <h1 style="font-size: 2.5rem; font-weight: 800;">PayMint</h1>
+            <h1 style="font-size: 2.2rem; font-weight: 800;">PayMint</h1>
             <p style="color: var(--text-muted);">Secure Payment Gateway</p>
         </div>
         
@@ -301,14 +249,14 @@
     <div class="container" id="dashboardContainer" style="display: none;">
         
         <div>
-            <div class="glass-card" style="margin-bottom: 30px;">
+            <div class="glass-card" style="margin-bottom: 25px;">
                 <div class="header" style="margin-bottom: 0;">
                     <div class="brand">
                         <div class="brand-icon"><i class="ri-secure-payment-line"></i></div>
                         <div>
-                            <h1>PayMint <span>Console</span></h1>
+                            <h1>PayMint</h1>
                             <div class="status-row" style="margin: 5px 0 0 0;">
-                                <div class="status-item" style="display:flex; align-items:center; gap:5px;">
+                                <div class="status-item" style="display:flex; align-items:center; gap:5px; font-size: 0.8rem; color: var(--success);">
                                     <div class="dot pulse" style="background:var(--success)"></div> System Online
                                 </div>
                             </div>
@@ -317,23 +265,22 @@
                     
                     <div class="header-actions">
                         <div class="api-key-container">
-                            <span class="api-key-text" id="apiKeyDisplay">Loading...</span>
+                            <span class="api-key-text" id="apiKeyDisplay">...</span>
                             <i class="ri-file-copy-line" style="cursor:pointer; color:var(--text-muted)" onclick="copyToClipboard('apiKeyDisplay')"></i>
                         </div>
                         
-                        <div class="lang-switch">
-                            <button class="lang-btn active" data-lang="tr" onclick="changeLanguage('tr')">TR</button>
+                        <div class="lang-switch" style="display: none;"> <button class="lang-btn active" data-lang="tr" onclick="changeLanguage('tr')">TR</button>
                             <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">EN</button>
                         </div>
 
-                        <button onclick="handleLogout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem; margin-left:10px;"><i class="ri-logout-box-r-line"></i></button>
+                        <button onclick="handleLogout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem; padding: 5px;"><i class="ri-logout-box-r-line"></i></button>
                     </div>
                 </div>
             </div>
 
             <div class="glass-card">
                 <div class="tabs">
-                    <button class="tab active" data-tab="payment" data-tr="Yeni Ödeme" data-en="New Payment" onclick="changeTab('payment')"><i class="ri-add-circle-line"></i> <span data-tr="Yeni Ödeme" data-en="New Payment">Yeni Ödeme</span></button>
+                    <button class="tab active" data-tab="payment" data-tr="Yeni Ödeme" data-en="New Payment" onclick="changeTab('payment')"><i class="ri-add-circle-line"></i> <span data-tr="Yeni Ödeme" data-en="New Payment">Ödeme</span></button>
                     <button class="tab" data-tab="status" data-tr="Sorgula" data-en="Query" onclick="changeTab('status')"><i class="ri-search-line"></i> <span data-tr="Sorgula" data-en="Query">Sorgula</span></button>
                     <button class="tab" data-tab="history" data-tr="Geçmiş" data-en="History" onclick="changeTab('history'); loadHistory()"><i class="ri-history-line"></i> <span data-tr="Geçmiş" data-en="History">Geçmiş</span></button>
                 </div>
@@ -359,11 +306,11 @@
                             <input type="hidden" name="provider" id="selectedProvider" value="mock">
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px;">
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 15px;">
                             <div class="form-group">
                                 <label data-tr="Tutar" data-en="Amount">Tutar</label>
                                 <div class="input-group">
-                                    <input type="text" id="amount" name="amount" placeholder="0,00" required oninput="formatAmountInput(this)" style="font-size:1.2rem; font-weight:700;">
+                                    <input type="text" id="amount" name="amount" placeholder="0,00" required oninput="formatAmountInput(this)" style="font-size:1.1rem; font-weight:700;">
                                     <select name="currency" class="currency-select">
                                         <option value="TRY">TRY</option>
                                         <option value="USD">USD</option>
@@ -373,14 +320,13 @@
                             </div>
                             <div class="form-group">
                                 <label data-tr="Açıklama" data-en="Description">Açıklama</label>
-                                <div class="input-group"><input type="text" name="description" placeholder="Örn: Sipariş #101" required></div>
+                                <div class="input-group"><input type="text" name="description" placeholder="Sipariş #101" required></div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label data-tr="Müşteri Bilgileri" data-en="Customer Info">Müşteri Bilgileri</label>
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                                <div class="input-group"><input type="text" name="customerName" placeholder="Ad Soyad" required oninput="updateCardName(this.value)"></div>
+                            <div style="display:grid; grid-template-columns: 1fr; gap:10px;"> <div class="input-group"><input type="text" name="customerName" placeholder="Ad Soyad" required oninput="updateCardName(this.value)"></div>
                                 <div class="input-group"><input type="email" name="customerEmail" placeholder="Email" required></div>
                             </div>
                         </div>
@@ -405,10 +351,12 @@
                 </div>
 
                 <div id="historyTab" class="tab-content">
-                    <table>
-                        <thead><tr><th>ID</th><th data-tr="Tutar" data-en="Amount">Tutar</th><th data-tr="Altyapı" data-en="Provider">Altyapı</th><th data-tr="Durum" data-en="Status">Durum</th></tr></thead>
-                        <tbody id="historyList"></tbody>
-                    </table>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>ID</th><th data-tr="Tutar" data-en="Amount">Tutar</th><th data-tr="Altyapı" data-en="Provider">Altyapı</th><th data-tr="Durum" data-en="Status">Durum</th></tr></thead>
+                            <tbody id="historyList"></tbody>
+                        </table>
+                    </div>
                     <button onclick="loadHistory()" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-muted); margin-top:15px; border-radius:8px; cursor:pointer;" data-tr="Yenile" data-en="Refresh">Yenile</button>
                 </div>
             </div>
@@ -418,10 +366,10 @@
             <div class="card-container" id="tiltCard">
                 <div class="tilt-card">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <img src="https://raw.githubusercontent.com/muhammederdem/credit-card-form/master/src/assets/images/chip.png" style="width:50px; opacity:0.8;">
+                        <img src="https://raw.githubusercontent.com/muhammederdem/credit-card-form/master/src/assets/images/chip.png" style="width:40px; opacity:0.8;">
                         <i class="ri-wifi-line" style="font-size:1.5rem; opacity:0.7;"></i>
                     </div>
-                    <div style="font-family:'Fira Code'; font-size:1.4rem; letter-spacing:3px; text-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                    <div style="font-family:'Fira Code'; font-size:1.2rem; letter-spacing:2px; text-shadow:0 2px 5px rgba(0,0,0,0.2);">
                         **** **** **** 4242
                     </div>
                     <div style="display:flex; justify-content:space-between;">
