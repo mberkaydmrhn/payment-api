@@ -1,355 +1,283 @@
 const API_BASE_URL = window.location.origin;
-
-// Global State
 let userApiKey = null;
 let userEmail = null;
-let currentLang = localStorage.getItem('PAYMINT_LANG') || 'tr'; // Varsayılan dil
+let currentLang = localStorage.getItem('PAYMINT_LANG') || 'tr';
 
-// ==================== 1. DİL YÖNETİMİ (UI FIX) ====================
-
+// --- LANGUAGE DICTIONARY ---
 const translations = {
-    tr: {
-        amountError: "Lütfen tutar girin",
-        invalidAmount: "Geçersiz Tutar!",
-        apiKeyMissing: "API Key bulunamadı. Lütfen giriş yapın.",
-        processing: "İşleniyor...",
-        success: "Başarılı! Yönlendiriliyor...",
-        copy: "Kopyalandı!",
-        logout: "Oturum kapatıldı.",
-        welcome: "Oturum açıldı."
-    },
-    en: {
-        amountError: "Please enter an amount",
-        invalidAmount: "Invalid Amount!",
-        apiKeyMissing: "API Key missing. Please login.",
-        processing: "Processing...",
-        success: "Success! Redirecting...",
-        copy: "Copied!",
-        logout: "Logged out.",
-        welcome: "Logged in."
-    }
+    tr: { amountError: "Lütfen tutar girin", invalidAmount: "Geçersiz Tutar!", apiKeyMissing: "API Key bulunamadı.", processing: "İşleniyor...", success: "Başarılı! Yönlendiriliyor...", copy: "Kopyalandı!", logout: "Oturum kapatıldı.", welcome: "Oturum açıldı." },
+    en: { amountError: "Please enter an amount", invalidAmount: "Invalid Amount!", apiKeyMissing: "API Key missing.", processing: "Processing...", success: "Success! Redirecting...", copy: "Copied!", logout: "Logged out.", welcome: "Logged in." }
 };
 
+// --- LANGUAGE HANDLER ---
 function changeLanguage(lang) {
     currentLang = lang;
     localStorage.setItem('PAYMINT_LANG', lang);
-
-    // 1. Butonların aktiflik durumunu güncelle
+    
+    // Update Buttons
     document.querySelectorAll('.lang-btn').forEach(btn => {
         if (btn.dataset.lang === lang) btn.classList.add('active');
         else btn.classList.remove('active');
     });
 
-    // 2. Sayfadaki metinleri güncelle (data-tr / data-en)
+    // Update Text Elements
     document.querySelectorAll('[data-tr]').forEach(el => {
         const text = el.getAttribute(`data-${lang}`);
         if (text) {
-            if (el.tagName === 'INPUT') {
-                // Input ise placeholder'ı değiştir
-                el.placeholder = text;
-            } else {
-                // Normal text
-                el.innerText = text;
+            if (el.tagName === 'INPUT') el.placeholder = text;
+            else if(el.childNodes.length > 1 && el.tagName === 'BUTTON') {
+                // Iconlu butonlar için sadece text node'u güncellemek gerekebilir
+                // Basit çözüm: innerHTML'i bozmamak için span varsa ona, yoksa direkt elemana yaz
+                const span = el.querySelector('span');
+                if(span) span.innerText = text;
+                else el.innerText = text; // İkon yoksa
             }
+            else el.innerText = text;
         }
     });
-    
-    // Log'a bilgi düş (Opsiyonel)
-    // addLog(`Language switched to ${lang.toUpperCase()}`);
 }
 
-// ==================== 2. YARDIMCI FONKSİYONLAR ====================
+// --- 3D TILT EFFECT ---
+const card = document.getElementById('tiltCard');
+const tiltCardInner = document.querySelector('.tilt-card');
 
-function formatAmountInput(input) {
-    let val = input.value.replace(/\./g, ',').replace(/[^0-9,]/g, '');
-    const parts = val.split(',');
-    let integerPart = parts[0];
-    if (integerPart.length > 1 && integerPart.startsWith('0')) integerPart = integerPart.substring(1);
-    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    if (parts.length > 1) input.value = `${integerPart},${parts[1].substring(0, 2)}`;
-    else input.value = val.indexOf(',') > -1 ? `${integerPart},` : integerPart;
+if (card) {
+    card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -15; 
+        const rotateY = ((x - centerX) / centerX) * 15;
+        tiltCardInner.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        tiltCardInner.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+    });
 }
 
-function formatMoney(amount, currency) {
-    // Para birimine göre formatlama
-    try {
-        return new Intl.NumberFormat(currentLang === 'tr' ? 'tr-TR' : 'en-US', { style: 'currency', currency: currency }).format(amount);
-    } catch (e) {
-        return amount + ' ' + currency;
-    }
+function updateCardName(val) {
+    document.getElementById('cardNameDisplay').innerText = val.toUpperCase() || 'YOUR NAME';
 }
 
-function showToast(message) {
-    const toast = document.getElementById("toast");
-    if(toast) {
-        toast.innerText = message;
-        toast.className = "show";
-        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-    }
+// --- PROVIDER SELECTION ---
+function selectProvider(val, el) {
+    document.getElementById('selectedProvider').value = val;
+    document.querySelectorAll('.provider-option').forEach(opt => opt.classList.remove('selected'));
+    el.classList.add('selected');
 }
 
-function copyToClipboard(elementId) {
-    const el = document.getElementById(elementId);
-    if(el && el.value) {
-        navigator.clipboard.writeText(el.value);
-        showToast(translations[currentLang].copy);
-    }
+// --- HELPERS ---
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.className = 'show';
+    setTimeout(() => t.className = t.className.replace('show', ''), 3000);
 }
 
-function updateCardPreview(name) {
-    const display = document.getElementById('cardHolderDisplay');
-    if(display) display.innerText = name.toUpperCase() || 'AD SOYAD';
-}
-
-function addLog(message, type = 'info') {
-    const logContainer = document.getElementById('apiResponse');
-    if (!logContainer) return;
-    const entry = document.createElement('div');
-    entry.className = 'log-entry';
+function addLog(msg, type='info') {
+    const con = document.getElementById('consoleLogs');
     const time = new Date().toLocaleTimeString();
-    const colorClass = type === 'success' ? 'log-success' : (type === 'error' ? 'log-error' : '');
-    entry.innerHTML = `<span class="log-label">[${time}] ${type.toUpperCase()}</span><div class="${colorClass}">${message}</div>`;
-    logContainer.insertBefore(entry, logContainer.firstChild);
+    let color = '#94a3b8';
+    if(type==='success') color='#34d399';
+    if(type==='error') color='#f87171';
+    const div = document.createElement('div');
+    div.className = 'log-line';
+    div.innerHTML = `<span style="color:#64748b;">[${time}]</span> <span style="color:${color};">${msg}</span>`;
+    con.prepend(div);
 }
 
-function changeTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    const content = document.getElementById(tabName + 'Tab');
-    const btn = document.querySelector(`[data-tab="${tabName}"]`);
-    if(content) content.classList.add('active');
-    if(btn) btn.classList.add('active');
+function copyToClipboard(id) {
+    // Element input ise value, text ise innerText
+    const el = document.getElementById(id);
+    const val = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerText;
+    navigator.clipboard.writeText(val);
+    showToast(translations[currentLang].copy);
 }
 
-// ==================== 3. AUTH SİSTEMİ ====================
+// Text kopyalama (History tablosu için)
+function copyText(text) {
+    navigator.clipboard.writeText(text);
+    showToast(translations[currentLang].copy);
+}
 
-function toggleAuthTab(tabName) {
-    if (tabName === 'login') {
-        document.getElementById('loginForm').style.display = 'block';
-        document.getElementById('registerForm').style.display = 'none';
-        document.getElementById('authTabLogin').classList.add('active');
-        document.getElementById('authTabRegister').classList.remove('active');
+// --- TUTAR FORMATLAMA (DÜZELTİLMİŞ VERSİYON) ---
+function formatAmountInput(input) {
+    let val = input.value;
+    if (!val) return;
+
+    // Noktaları sil (5.555 -> 5555)
+    let cleanVal = val.replace(/\./g, ''); 
+
+    // Fazla virgülleri temizle
+    if ((cleanVal.match(/,/g) || []).length > 1) {
+        cleanVal = cleanVal.substring(0, cleanVal.lastIndexOf(','));
+    }
+
+    let parts = cleanVal.split(',');
+    let integerPart = parts[0].replace(/[^0-9]/g, ''); 
+
+    // Binlik ayracı ekle
+    let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    if (parts.length > 1) {
+        let decimalPart = parts[1].replace(/[^0-9]/g, '').substring(0, 2);
+        input.value = `${formattedInteger},${decimalPart}`;
     } else {
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('registerForm').style.display = 'block';
-        document.getElementById('authTabLogin').classList.remove('active');
-        document.getElementById('authTabRegister').classList.add('active');
+        if (val.indexOf(',') > -1) input.value = `${formattedInteger},`;
+        else input.value = formattedInteger;
     }
 }
 
-function showAuthError(form, message) {
-    const errorEl = document.getElementById(form === 'login' ? 'loginError' : 'registerError');
-    errorEl.innerText = message;
-    errorEl.style.display = 'block';
+// --- TABS & AUTH ---
+function changeTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById(tab + 'Tab').classList.add('active');
+    
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`button[data-tab="${tab}"]`).classList.add('active');
 }
 
-function showDashboard(key, email) {
+function toggleAuthTab(tab) {
+    document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+    document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+    document.getElementById('authTabLogin').classList.toggle('active', tab==='login');
+    document.getElementById('authTabRegister').classList.toggle('active', tab==='register');
+}
+
+function showDash(key, email) {
     userApiKey = key;
-    userEmail = email;
     localStorage.setItem('PAYMINT_API_KEY', key);
     localStorage.setItem('PAYMINT_USER_EMAIL', email);
-
     document.getElementById('authContainer').style.display = 'none';
     document.getElementById('dashboardContainer').style.display = 'grid';
-    document.getElementById('apiKeyDisplay').value = key;
-    document.getElementById('userEmailDisplay').innerText = email;
+    document.getElementById('apiKeyDisplay').innerText = key;
     
-    addLog(translations[currentLang].welcome, "success");
-    
-    // Sayfa yüklendiğinde dili uygula
-    changeLanguage(currentLang);
+    changeLanguage(currentLang); // Apply language
+    addLog(translations[currentLang].welcome, 'success');
 }
 
-function handleLogout() {
-    localStorage.removeItem('PAYMINT_API_KEY');
-    localStorage.removeItem('PAYMINT_USER_EMAIL');
-    userApiKey = null;
-    userEmail = null;
-    document.getElementById('authContainer').style.display = 'block';
-    document.getElementById('dashboardContainer').style.display = 'none';
-    showToast(translations[currentLang].logout);
-}
-
-// ==================== 4. API ETKİLEŞİMLERİ ====================
-
-async function processPayment(event) {
-    event.preventDefault();
-    if (!userApiKey) { showToast(translations[currentLang].apiKeyMissing); return; }
-
-    addLog(currentLang === 'tr' ? 'Ödeme isteği gönderiliyor...' : 'Sending payment request...', 'info');
-    const formData = new FormData(event.target);
+// --- API CALLS ---
+async function processPayment(e) {
+    e.preventDefault();
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true; btn.innerHTML = `<i class="ri-loader-4-line pulse"></i> ${translations[currentLang].processing}`;
     
-    let rawAmount = document.getElementById('amount').value;
-    if (!rawAmount) { showToast(translations[currentLang].amountError); return; }
+    const formData = new FormData(e.target);
+    const rawAmount = document.getElementById('amount').value.replace(/\./g, '').replace(',', '.');
     
-    // Tutarı temizle (1.500,50 -> 1500.50)
-    rawAmount = rawAmount.replace(/\./g, '').replace(',', '.');
-    const cleanAmount = parseFloat(rawAmount);
-
-    if (isNaN(cleanAmount) || cleanAmount <= 0) {
-        showToast(translations[currentLang].invalidAmount); return;
-    }
-
-    const paymentData = {
-        amount: cleanAmount,
+    const data = {
+        amount: parseFloat(rawAmount),
         currency: formData.get('currency'),
+        provider: formData.get('provider'),
         description: formData.get('description'),
         webhookUrl: formData.get('webhookUrl'),
-        returnUrl: window.location.href,
-        provider: formData.get('provider'),
-        customerInfo: {
-            name: formData.get('customerName'),
-            email: formData.get('customerEmail')
-        }
+        customerInfo: { name: formData.get('customerName'), email: formData.get('customerEmail') }
     };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/payments/create`, {
+        const res = await fetch(`${API_BASE_URL}/api/payments/create`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'x-api-key': userApiKey
-            },
-            body: JSON.stringify(paymentData)
+            headers: { 'Content-Type': 'application/json', 'x-api-key': userApiKey },
+            body: JSON.stringify(data)
         });
-        const result = await response.json();
-        
-        if (result.success) {
-            addLog(`✅ ID: ${result.data.paymentId}`, 'success');
-            document.getElementById('paymentId').value = result.data.paymentId;
+        const json = await res.json();
+        if(json.success) {
+            addLog(`Created: ${json.data.paymentId}`, 'success');
             showToast(translations[currentLang].success);
-            // Yönlendir
-            setTimeout(() => { window.location.href = result.data.paymentUrl; }, 1500);
+            setTimeout(() => window.location.href = json.data.paymentUrl, 1000);
         } else {
-            addLog(`❌ Error: ${result.error.message}`, 'error');
-            showToast(result.error.message);
+            addLog(`Error: ${json.error.message}`, 'error');
+            showToast(json.error.message);
+            btn.disabled=false; btn.innerHTML = `Ödeme Linki Oluştur <i class="ri-link"></i>`;
         }
-    } catch (error) {
-        addLog(`❌ Network Error: ${error.message}`, 'error');
+    } catch(err) {
+        addLog('Network Error', 'error');
+        btn.disabled=false; btn.innerHTML = `Ödeme Linki Oluştur <i class="ri-link"></i>`;
     }
-}
-
-async function checkPaymentStatus() {
-    const id = document.getElementById('paymentId').value;
-    if (!id) { showToast("ID required"); return; }
-
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/payments/${id}/status`);
-        const data = await res.json();
-        if(data.success) {
-            const formattedAmount = formatMoney(data.data.amount, data.data.currency);
-            addLog(`📊 ${data.data.status.toUpperCase()} | ${formattedAmount}`, 'success');
-        } else {
-            addLog('Not Found', 'error');
-        }
-    } catch(e) { addLog('Error checking status', 'error'); }
 }
 
 async function loadHistory() {
-    if (!userApiKey) return;
-    
     const tbody = document.getElementById('historyList');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Loading...</td></tr>`;
-
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Yükleniyor...</td></tr>';
     try {
-        const res = await fetch(`${API_BASE_URL}/api/payments`, {
-             headers: { 'x-api-key': userApiKey }
-        });
-        const data = await res.json();
-
-        if(data.success && data.data.length > 0) {
+        const res = await fetch(`${API_BASE_URL}/api/payments`, { headers: {'x-api-key': userApiKey} });
+        const json = await res.json();
+        if(json.success && json.data.length > 0) {
             tbody.innerHTML = '';
-            data.data.forEach(pay => {
-                const date = new Date(pay.createdAt).toLocaleString(currentLang === 'tr' ? 'tr-TR' : 'en-US');
-                let color = pay.status === 'paid' ? '#10b981' : (pay.status === 'failed' ? '#ef4444' : '#f59e0b');
-                const money = formatMoney(pay.amount, pay.currency);
+            json.data.forEach(p => {
+                let badge = 'badge-success';
+                if(p.status === 'pending') badge = 'style="color:#fbbf24; background:rgba(251,191,36,0.1)"';
+                if(p.status === 'failed') badge = 'style="color:#f87171; background:rgba(248,113,113,0.1)"';
                 
-                const row = `
-                    <tr style="border-bottom: 1px solid #f1f5f9;">
-                        <td><button onclick="copyToClipboard('pid_${pay.paymentId}')" style="cursor:pointer; border:none; background:none; color:#6366f1; font-family:monospace;">${pay.paymentId.slice(-6)}..</button><input type="hidden" id="pid_${pay.paymentId}" value="${pay.paymentId}"></td>
-                        <td style="font-weight:600;">${money}</td>
-                        <td><span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:0.8rem;">${pay.provider.toUpperCase()}</span></td>
-                        <td><span style="color:${color}; font-weight:700;">${pay.status.toUpperCase()}</span></td>
-                        <td style="font-size:0.75rem; color:#94a3b8;">${date}</td>
-                    </tr>`;
+                // ID'yi Kısalt
+                const shortId = p.paymentId.length > 12 ? p.paymentId.substring(0, 10) + '...' : p.paymentId;
+
+                const row = `<tr>
+                    <td>
+                        <div class="id-wrapper">
+                            <span class="id-text" title="${p.paymentId}">${shortId}</span>
+                            <button class="copy-id-btn" onclick="copyText('${p.paymentId}')"><i class="ri-file-copy-line"></i></button>
+                        </div>
+                    </td>
+                    <td style="font-weight:600;">${p.amount} ${p.currency}</td>
+                    <td>${p.provider.toUpperCase()}</td>
+                    <td><span class="badge ${p.status === 'paid' ? 'badge-success' : ''}" ${badge}>${p.status.toUpperCase()}</span></td>
+                </tr>`;
                 tbody.innerHTML += row;
             });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No transactions found.</td></tr>';
-        }
-    } catch(e) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error loading history.</td></tr>';
-    }
+        } else tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">İşlem yok</td></tr>';
+    } catch(e) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Hata</td></tr>'; }
 }
 
-// ==================== 5. BAŞLATMA ====================
+async function checkStatus() {
+    const id = document.getElementById('queryId').value;
+    if(!id) return showToast('ID giriniz');
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/payments/${id}/status`);
+        const json = await res.json();
+        if(json.success) addLog(`${json.data.status.toUpperCase()} | ${json.data.amount} ${json.data.currency}`, 'success');
+        else addLog('Bulunamadı', 'error');
+    } catch(e) { addLog('Hata', 'error'); }
+}
 
+function handleLogout() {
+    localStorage.clear();
+    location.reload();
+}
+
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Form Listener'ları
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
-    const logoutButton = document.getElementById('logoutButton');
-    const paymentForm = document.getElementById('paymentForm');
+    const payForm = document.getElementById('paymentForm');
 
     if(loginForm) loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, { 
-            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) 
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({email:document.getElementById('loginEmail').value, password:document.getElementById('loginPassword').value})
         });
-        const data = await res.json();
-        if (data.success) showDashboard(data.data.apiKey, data.data.email);
-        else showAuthError('login', data.message);
+        const json = await res.json();
+        if(json.success) showDash(json.data.apiKey, json.data.email);
+        else document.getElementById('loginError').innerText = json.message;
     });
 
     if(registerForm) registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
-        const res = await fetch(`${API_BASE_URL}/api/auth/register`, { 
-            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({email, password}) 
+        const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({email:document.getElementById('registerEmail').value, password:document.getElementById('registerPassword').value})
         });
-        const data = await res.json();
-        if (data.success) { 
-            showToast(currentLang === 'tr' ? 'Kayıt Başarılı' : 'Registration Successful'); 
-            toggleAuthTab('login'); 
-        }
-        else showAuthError('register', data.message);
+        const json = await res.json();
+        if(json.success) { showToast('Kayıt Başarılı'); toggleAuthTab('login'); }
+        else document.getElementById('registerError').innerText = json.message;
     });
-    
-    if(logoutButton) logoutButton.addEventListener('click', handleLogout);
-    if(paymentForm) paymentForm.addEventListener('submit', processPayment);
-    
-    // Tab Geçişleri
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() { changeTab(this.getAttribute('data-tab')); });
-    });
-    
-    // Oturum Kontrolü
-    const savedKey = localStorage.getItem('PAYMINT_API_KEY');
-    const savedEmail = localStorage.getItem('PAYMINT_USER_EMAIL');
-    
-    // Dili Yükle
-    changeLanguage(currentLang);
 
-    if (savedKey && savedEmail) {
-        showDashboard(savedKey, savedEmail);
-    } else {
-        document.getElementById('authContainer').style.display = 'block';
-    }
-    
-    // URL Durum Kontrolü (Ödeme Dönüşü)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('status') && savedKey) {
-        const isSuccess = urlParams.get('status') === 'success';
-        showToast(isSuccess ? (currentLang === 'tr' ? 'Ödeme Başarılı!' : 'Payment Successful!') : (currentLang === 'tr' ? 'Ödeme Başarısız' : 'Payment Failed'));
-        
-        // URL'i temizle
-        window.history.replaceState({}, document.title, "/");
-        
-        // Geçmişe git ve yenile
-        changeTab('history');
-        loadHistory();
-    }
+    if(payForm) payForm.addEventListener('submit', processPayment);
+
+    const k = localStorage.getItem('PAYMINT_API_KEY');
+    const e = localStorage.getItem('PAYMINT_USER_EMAIL');
+    if(k && e) showDash(k, e);
+    else document.getElementById('authContainer').style.display = 'block';
 });

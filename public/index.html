@@ -3,304 +3,460 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PayMint API - Developer Dashboard</title>
+    <title>PayMint | Developer Console</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
     <style>
         :root {
+            --bg-dark: #0f111a;
+            --card-bg: rgba(30, 41, 59, 0.65); /* Biraz daha opak okuma kolaylığı için */
+            --border: rgba(255, 255, 255, 0.1);
             --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            --card-bg: rgba(255, 255, 255, 0.98);
-            --text-main: #1e293b;
-            --text-light: #64748b;
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
             --success: #10b981;
-            --error: #ef4444;
-            --radius: 16px;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            color: var(--text-main);
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            display: grid;
-            grid-template-columns: 1.4fr 0.9fr;
-            gap: 25px;
-            align-items: start;
-            margin-top: 2vh;
-        }
-        .main-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 35px;
-            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
-            min-height: 600px;
-            display: flex;
-            flex-direction: column;
-        }
-        .header { 
-            margin-bottom: 25px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        .brand h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
-        .brand span { color: var(--primary); }
-        .brand p { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
-        
-        /* DİL BUTONLARI */
-        .lang-switch { 
-            background: #f1f5f9; 
-            padding: 4px; 
-            border-radius: 8px; 
-            display: flex; 
-            gap: 4px;
-        }
-        .lang-btn { 
-            border: none; 
-            background: none; 
-            padding: 6px 12px; 
-            font-size: 0.75rem; 
-            font-weight: 600; 
-            color: var(--text-light); 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-        }
-        .lang-btn.active { 
-            background: white; 
-            color: var(--primary); 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            --danger: #ef4444;
+            --radius: 24px;
         }
 
-        .tabs { display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; overflow-x: auto; }
-        .tab { background: none; border: none; padding: 8px 10px; color: var(--text-light); font-weight: 500; cursor: pointer; position: relative; transition: 0.3s; white-space: nowrap; font-size: 0.95rem;}
-        .tab.active { color: var(--primary); font-weight: 600; }
-        .tab.active::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 2px; background: var(--primary); }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
         
-        .content-wrapper { flex-grow: 1; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1150px;
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 35px;
+            animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- GLASS CARDS --- */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 35px;
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+        }
+
+        /* --- HEADER --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-icon { 
+            width: 45px; height: 45px; 
+            background: linear-gradient(135deg, var(--primary), #ec4899);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: white;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+        .brand h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px; }
+        .brand span { font-weight: 400; color: var(--text-muted); }
+
+        /* --- LANG SWITCH & ACTIONS --- */
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        
+        .lang-switch {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 3px;
+            border: 1px solid var(--border);
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .lang-btn.active { background: var(--primary); color: white; }
+
+        /* --- PROVIDER CARDS --- */
+        .provider-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .provider-option {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .provider-option:hover { background: rgba(255,255,255,0.06); border-color: var(--text-muted); }
+        .provider-option.selected {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+        }
+        .provider-option i { font-size: 1.5rem; color: var(--text-muted); }
+        .provider-option.selected i { color: var(--primary); }
+        .provider-label { font-size: 0.85rem; font-weight: 600; }
+        #provider { display: none; }
+
+        /* --- FORM ELEMENTS --- */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; margin-left: 4px; }
+        
+        .input-group {
+            display: flex;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 4px;
+            transition: 0.2s;
+        }
+        .input-group:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            font-size: 1rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        select.currency-select {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            padding: 0 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 4px;
+        }
+        select.currency-select option { background: #0f172a; color: white; }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px -10px var(--primary-glow);
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -10px var(--primary-glow); }
+
+        /* --- API KEY BOX --- */
+        .api-key-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 14px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border);
+        }
+        .api-key-text { font-family: 'Fira Code', monospace; color: var(--primary); font-weight: 600; letter-spacing: 1px; font-size: 0.9rem; }
+        
+        /* --- 3D TILT CARD --- */
+        .card-container { perspective: 1000px; width: 100%; height: 220px; margin-bottom: 25px; }
+        .tilt-card {
+            width: 100%; height: 100%; border-radius: 20px;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+            position: relative; transform-style: preserve-3d;
+            box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.5);
+            padding: 25px; display: flex; flex-direction: column; justify-content: space-between; color: white;
+            transition: transform 0.1s ease-out;
+        }
+        .tilt-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%);
+            border-radius: 20px; z-index: 2; pointer-events: none;
+        }
+
+        /* --- TABS --- */
+        .tabs { display: flex; gap: 5px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; margin-bottom: 25px; }
+        .tab { flex: 1; padding: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 8px; font-weight: 600; transition: 0.3s; display:flex; align-items:center; justify-content:center; gap:5px;}
+        .tab.active { background: rgba(255,255,255,0.1); color: white; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
-        
-        .form-group { margin-bottom: 18px; }
-        label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px; }
-        input, select { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.2s; font-family: 'Inter', sans-serif; background: white; }
-        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-        
-        button.btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
-        button.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-        
-        /* Side Panel & Credit Card */
-        .side-panel { display: flex; flex-direction: column; gap: 25px; position: sticky; top: 20px; }
-        .credit-card { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border-radius: var(--radius); padding: 25px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3); aspect-ratio: 1.58/1; }
-        .card-chip { width: 40px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .card-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 20px; }
-        .card-info { display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
-        .card-name { font-weight: 600; }
-        
-        .api-log { background: #0f172a; border-radius: var(--radius); padding: 20px; color: #22d3ee; font-family: 'Courier New', monospace; font-size: 0.8rem; height: 300px; overflow-y: auto; border: 1px solid #334155; }
-        .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; word-break: break-all; }
-        .log-success { color: var(--success); }
-        .log-error { color: var(--error); }
-        .log-label { color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px; }
-        
-        /* Table & Helpers */
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* --- HISTORY TABLE (DÜZELTİLDİ) --- */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #64748b; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; padding: 10px;}
-        td { padding: 14px 10px; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
-        .copy-btn { background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; color: var(--text-light); position: absolute; right: 10px; top: 38px; }
-        .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
+        th { text-align: left; color: var(--text-muted); font-size: 0.8rem; padding: 15px 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 15px 10px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
         
-        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 50px; padding: 16px 24px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.95rem; box-shadow: 0 15px 30px rgba(0,0,0,0.3); }
+        /* Payment ID Hücresi için özel stil */
+        .id-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 6px;
+            width: fit-content;
+            border: 1px solid var(--border);
+        }
+        .id-text { font-family: 'Fira Code', monospace; color: var(--primary); font-size: 0.85rem; }
+        .copy-id-btn { 
+            background: none; border: none; color: var(--text-muted); cursor: pointer; 
+            display: flex; align-items: center; transition: 0.2s;
+        }
+        .copy-id-btn:hover { color: white; }
+
+        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        
+        /* --- LOGS --- */
+        .console { background: #0a0c12; padding: 15px; border-radius: 16px; height: 300px; overflow-y: auto; font-family: 'Fira Code'; font-size: 0.8rem; border: 1px solid var(--border); }
+        .log-line { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; }
+
+        /* --- TOAST --- */
+        #toast { visibility: hidden; min-width: 250px; background: var(--primary); color: white; text-align: center; border-radius: 50px; padding: 16px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 999; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4); font-weight: 500; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* AUTH UI */
-        #authContainer { width: 100%; max-width: 400px; margin: 10vh auto 0; }
-        .auth-card { background: var(--card-bg); padding: 35px; border-radius: var(--radius); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); }
-        .auth-toggle { display: flex; background: #f1f5f9; border-radius: 10px; padding: 5px; margin-bottom: 25px; }
-        .auth-toggle button { flex: 1; padding: 10px; border: none; border-radius: 8px; background: none; font-weight: 600; font-size: 0.9rem; color: var(--text-light); cursor: pointer; }
-        .auth-toggle button.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .auth-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 15px; display: none; }
-        .auth-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 15px; display: none; }
+        #authContainer { width: 100%; max-width: 420px; margin: 10vh auto; }
 
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            .side-panel { order: -1; position: static; margin-bottom: 20px; }
-        }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
     <div id="authContainer" style="display: none;">
-        <div class="brand" style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: white; font-size: 2rem;">PayMint<span>API</span></h1>
-            <p style="color: #94a3b8;">Geliştirici Paneline Hoş Geldiniz</p>
+        <div style="text-align:center; margin-bottom:40px;">
+            <div style="width:70px; height:70px; margin:0 auto 20px; background:linear-gradient(135deg, var(--primary), #ec4899); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow: 0 0 30px var(--primary-glow);">🚀</div>
+            <h1 style="font-size: 2.5rem; font-weight: 800;">PayMint</h1>
+            <p style="color: var(--text-muted);">Secure Payment Gateway</p>
         </div>
-        <div class="auth-card">
-            <div class="auth-toggle">
-                <button id="authTabLogin" class="active" onclick="toggleAuthTab('login')">Giriş Yap</button>
-                <button id="authTabRegister" onclick="toggleAuthTab('register')">Kayıt Ol</button>
+        
+        <div class="glass-card">
+            <div style="display:flex; gap:10px; margin-bottom:25px;">
+                <button id="authTabLogin" class="tab active" onclick="toggleAuthTab('login')">Giriş Yap</button>
+                <button id="authTabRegister" class="tab" onclick="toggleAuthTab('register')">Kayıt Ol</button>
             </div>
 
             <form id="loginForm">
                 <div class="form-group">
-                    <label>E-Mail</label>
-                    <input type="email" id="loginEmail" required>
+                    <label>Email</label>
+                    <div class="input-group"><input type="email" id="loginEmail" required></div>
                 </div>
                 <div class="form-group">
                     <label data-tr="Şifre" data-en="Password">Şifre</label>
-                    <input type="password" id="loginPassword" required>
+                    <div class="input-group"><input type="password" id="loginPassword" required></div>
                 </div>
-                <button type="submit" class="btn-primary">Giriş Yap</button>
-                <div id="loginError" class="auth-error"></div>
+                <button type="submit" class="btn-primary">Giriş Yap <i class="ri-arrow-right-line"></i></button>
+                <div id="loginError" style="color:var(--danger); margin-top:15px; font-size:0.9rem;"></div>
             </form>
 
-            <form id="registerForm" style="display: none;">
+            <form id="registerForm" style="display:none;">
                 <div class="form-group">
-                    <label>E-Mail</label>
-                    <input type="email" id="registerEmail" required>
+                    <label>Email</label>
+                    <div class="input-group"><input type="email" id="registerEmail" required></div>
                 </div>
                 <div class="form-group">
                     <label data-tr="Şifre" data-en="Password">Şifre</label>
-                    <input type="password" id="registerPassword" required>
+                    <div class="input-group"><input type="password" id="registerPassword" required></div>
                 </div>
-                <button type="submit" class="btn-primary">Kayıt Ol</button>
-                <div id="registerSuccess" class="auth-success"></div>
-                <div id="registerError" class="auth-error"></div>
+                <button type="submit" class="btn-primary">Hesap Oluştur</button>
+                <div id="registerError" style="color:var(--danger); margin-top:15px; font-size:0.9rem;"></div>
+                <div id="registerSuccess" style="color:var(--success); margin-top:15px; font-size:0.9rem;"></div>
             </form>
         </div>
     </div>
-    
+
     <div class="container" id="dashboardContainer" style="display: none;">
-        <div class="main-card">
-            <div class="header">
-                <div class="brand"><h1>PayMint<span>API</span></h1><p id="userEmailDisplay">Developer Dashboard</p></div>
-                
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <div class="lang-switch">
-                        <button class="lang-btn active" data-lang="tr" onclick="changeLanguage('tr')">TR</button>
-                        <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">EN</button>
+        
+        <div>
+            <div class="glass-card" style="margin-bottom: 30px;">
+                <div class="header" style="margin-bottom: 0;">
+                    <div class="brand">
+                        <div class="brand-icon"><i class="ri-secure-payment-line"></i></div>
+                        <div>
+                            <h1>PayMint <span>Console</span></h1>
+                            <div class="status-row" style="margin: 5px 0 0 0;">
+                                <div class="status-item" style="display:flex; align-items:center; gap:5px;">
+                                    <div class="dot pulse" style="background:var(--success)"></div> System Online
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <button id="logoutButton" style="background:none; border:none; color:var(--error); font-weight:600; cursor:pointer; font-size: 0.9rem;">
-                        <span data-tr="Çıkış" data-en="Logout">Çıkış</span>
-                    </button>
+                    <div class="header-actions">
+                        <div class="api-key-container">
+                            <span class="api-key-text" id="apiKeyDisplay">Loading...</span>
+                            <i class="ri-file-copy-line" style="cursor:pointer; color:var(--text-muted)" onclick="copyToClipboard('apiKeyDisplay')"></i>
+                        </div>
+                        
+                        <div class="lang-switch">
+                            <button class="lang-btn active" data-lang="tr" onclick="changeLanguage('tr')">TR</button>
+                            <button class="lang-btn" data-lang="en" onclick="changeLanguage('en')">EN</button>
+                        </div>
+
+                        <button onclick="handleLogout()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:1.2rem; margin-left:10px;"><i class="ri-logout-box-r-line"></i></button>
+                    </div>
                 </div>
             </div>
 
-            <div class="tabs">
-                <button class="tab active" data-tab="payment" data-tr="Ödeme Oluştur" data-en="Create Payment">Ödeme Oluştur</button>
-                <button class="tab" data-tab="status" data-tr="İşlem Sorgula" data-en="Check Status">İşlem Sorgula</button>
-                <button class="tab" data-tab="history" data-tr="İşlem Geçmişi" data-en="Transactions" onclick="loadHistory()">İşlem Geçmişi</button>
-            </div>
-
-            <div class="content-wrapper">
-                <div class="form-group" style="position:relative; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
-                    <label style="font-size: 0.8rem; color: var(--text-light);">API SECRET KEY</label>
-                    <input type="text" id="apiKeyDisplay" readonly style="font-family: monospace; background: transparent; border: none; padding: 8px 0; font-weight: 600; color: var(--primary-dark);">
-                    <button type="button" class="copy-btn" onclick="copyToClipboard('apiKeyDisplay')" data-tr="Kopyala" data-en="Copy">Kopyala</button>
+            <div class="glass-card">
+                <div class="tabs">
+                    <button class="tab active" data-tab="payment" data-tr="Yeni Ödeme" data-en="New Payment" onclick="changeTab('payment')"><i class="ri-add-circle-line"></i> <span data-tr="Yeni Ödeme" data-en="New Payment">Yeni Ödeme</span></button>
+                    <button class="tab" data-tab="status" data-tr="Sorgula" data-en="Query" onclick="changeTab('status')"><i class="ri-search-line"></i> <span data-tr="Sorgula" data-en="Query">Sorgula</span></button>
+                    <button class="tab" data-tab="history" data-tr="Geçmiş" data-en="History" onclick="changeTab('history'); loadHistory()"><i class="ri-history-line"></i> <span data-tr="Geçmiş" data-en="History">Geçmiş</span></button>
                 </div>
 
                 <div id="paymentTab" class="tab-content active">
                     <form id="paymentForm">
                         <div class="form-group">
-                            <label data-tr="Tutar ve Para Birimi" data-en="Amount & Currency">Tutar ve Para Birimi</label>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <input type="text" id="amount" name="amount" placeholder="150,00" inputmode="decimal" required oninput="formatAmountInput(this)" style="flex: 2; min-width: 120px;">
-                                <select name="currency" id="currency" style="flex: 1; min-width: 100px; background-image: none;">
-                                    <option value="TRY">₺ TRY</option>
-                                    <option value="USD">$ USD</option>
-                                    <option value="EUR">€ EUR</option>
-                                </select>
+                            <label data-tr="Ödeme Altyapısı" data-en="Payment Provider">Ödeme Altyapısı</label>
+                            <div class="provider-grid">
+                                <div class="provider-option" onclick="selectProvider('iyzico', this)">
+                                    <i class="ri-bank-card-fill"></i>
+                                    <span class="provider-label">Iyzico</span>
+                                </div>
+                                <div class="provider-option" onclick="selectProvider('stripe', this)">
+                                    <i class="ri-global-line"></i>
+                                    <span class="provider-label">Stripe</span>
+                                </div>
+                                <div class="provider-option selected" onclick="selectProvider('mock', this)">
+                                    <i class="ri-test-tube-fill"></i>
+                                    <span class="provider-label">Mock</span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="provider" id="selectedProvider" value="mock">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label data-tr="Tutar" data-en="Amount">Tutar</label>
+                                <div class="input-group">
+                                    <input type="text" id="amount" name="amount" placeholder="0,00" required oninput="formatAmountInput(this)" style="font-size:1.2rem; font-weight:700;">
+                                    <select name="currency" class="currency-select">
+                                        <option value="TRY">TRY</option>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label data-tr="Açıklama" data-en="Description">Açıklama</label>
+                                <div class="input-group"><input type="text" name="description" placeholder="Örn: Sipariş #101" required></div>
                             </div>
                         </div>
+
                         <div class="form-group">
-                            <label data-tr="Ödeme Altyapısı" data-en="Payment Provider">Ödeme Altyapısı</label>
-                            <select name="provider" id="provider">
-                                <option value="mock">🟣 Simülasyon (Mock)</option>
-                                <option value="iyzico">🔵 Iyzico (Sandbox)</option>
-                                <option value="stripe">🟢 Stripe (Global)</option>
-                            </select>
+                            <label data-tr="Müşteri Bilgileri" data-en="Customer Info">Müşteri Bilgileri</label>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                                <div class="input-group"><input type="text" name="customerName" placeholder="Ad Soyad" required oninput="updateCardName(this.value)"></div>
+                                <div class="input-group"><input type="email" name="customerEmail" placeholder="Email" required></div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label data-tr="Açıklama" data-en="Description">Açıklama</label>
-                            <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
+
+                         <div class="form-group">
+                            <label>Webhook URL <span style="color:var(--text-muted); font-weight:400;">(Opsiyonel)</span></label>
+                            <div class="input-group"><input type="url" name="webhookUrl" placeholder="https://..."></div>
                         </div>
-                        <div class="form-group">
-                            <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
-                            <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://your-api.com/webhook">
-                        </div>
-                        <div class="form-group">
-                            <label data-tr="Müşteri Adı" data-en="Customer Name">Müşteri Adı</label>
-                            <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required onkeyup="updateCardPreview(this.value)">
-                        </div>
-                        <div class="form-group">
-                            <label data-tr="Müşteri E-Mail" data-en="Customer Email">Müşteri E-Mail</label>
-                            <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
-                        </div>
-                        <button type="submit" class="btn-primary" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur</button>
+
+                        <button type="submit" class="btn-primary" id="payBtn" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur <i class="ri-link"></i></button>
                     </form>
                 </div>
 
                 <div id="statusTab" class="tab-content">
-                    <div class="form-group" style="position:relative;">
+                    <div class="form-group">
                         <label>Payment ID</label>
-                        <input type="text" id="paymentId" placeholder="pay_..." style="font-family: monospace; padding-right: 70px;">
-                        <button type="button" class="copy-btn" onclick="copyToClipboard('paymentId')" data-tr="Kopyala" data-en="Copy">Kopyala</button>
+                        <div class="input-group">
+                            <input type="text" id="queryId" placeholder="pay_...">
+                            <button type="button" onclick="checkStatus()" style="background:var(--primary); border:none; color:white; padding:0 20px; border-radius:10px; margin:4px; cursor:pointer;" data-tr="Sorgula" data-en="Query">Sorgula</button>
+                        </div>
                     </div>
-                    <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durumu Kontrol Et" data-en="Check Status">Durumu Kontrol Et</button>
                 </div>
 
                 <div id="historyTab" class="tab-content">
-                    <table style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th style="width: 100px;">ID</th>
-                                <th data-tr="Tutar" data-en="Amount">Tutar</th>
-                                <th data-tr="Altyapı" data-en="Provider">Altyapı</th>
-                                <th data-tr="Durum" data-en="Status">Durum</th>
-                                <th data-tr="Tarih" data-en="Date">Tarih</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyList">
-                            </tbody>
+                    <table>
+                        <thead><tr><th>ID</th><th data-tr="Tutar" data-en="Amount">Tutar</th><th data-tr="Altyapı" data-en="Provider">Altyapı</th><th data-tr="Durum" data-en="Status">Durum</th></tr></thead>
+                        <tbody id="historyList"></tbody>
                     </table>
-                    <br>
-                    <button class="btn-primary" onclick="loadHistory()" style="width: auto; padding: 8px 20px; font-size: 0.85rem; float:right;" data-tr="Yenile" data-en="Refresh">🔄 Yenile</button>
+                    <button onclick="loadHistory()" style="width:100%; padding:10px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text-muted); margin-top:15px; border-radius:8px; cursor:pointer;" data-tr="Yenile" data-en="Refresh">Yenile</button>
                 </div>
             </div>
         </div>
 
         <div class="side-panel">
-            <div class="credit-card">
-                <div class="card-chip"></div>
-                <div class="card-number">**** **** **** 4242</div>
-                <div class="card-info">
-                    <div class="card-name" id="cardHolderDisplay">AD SOYAD</div>
-                    <div class="card-date">12/28</div>
+            <div class="card-container" id="tiltCard">
+                <div class="tilt-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                        <img src="https://raw.githubusercontent.com/muhammederdem/credit-card-form/master/src/assets/images/chip.png" style="width:50px; opacity:0.8;">
+                        <i class="ri-wifi-line" style="font-size:1.5rem; opacity:0.7;"></i>
+                    </div>
+                    <div style="font-family:'Fira Code'; font-size:1.4rem; letter-spacing:3px; text-shadow:0 2px 5px rgba(0,0,0,0.2);">
+                        **** **** **** 4242
+                    </div>
+                    <div style="display:flex; justify-content:space-between;">
+                        <div>
+                            <div style="font-size:0.6rem; text-transform:uppercase; opacity:0.7;">Card Holder</div>
+                            <div style="font-weight:600; letter-spacing:1px;" id="cardNameDisplay">YOUR NAME</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.6rem; text-transform:uppercase; opacity:0.7;">Expires</div>
+                            <div style="font-weight:600;">12/28</div>
+                        </div>
+                    </div>
                 </div>
-                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" style="position: absolute; right: 20px; bottom: 20px; height: 30px; opacity: 0.8;">
             </div>
-            <div class="api-log" id="apiResponse">
-                <div class="log-entry"><span class="log-label">SYSTEM</span>Ready for requests...</div>
+
+            <div class="glass-card" style="padding:0; overflow:hidden; display:flex; flex-direction:column;">
+                <div style="padding:15px; border-bottom:1px solid var(--border); font-size:0.8rem; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:8px;">
+                    <div class="dot pulse" style="background:var(--success); width:8px; height:8px;"></div> LIVE LOGS
+                </div>
+                <div class="console" id="consoleLogs">
+                    <div class="log-line"><span style="color:#64748b;">SYSTEM</span> <span style="color:#34d399;">Ready for requests...</span></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="toast">Mesaj</div>
+    <div id="toast"></div>
     <script src="/demo.js"></script>
 </body>
 </html>

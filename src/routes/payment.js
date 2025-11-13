@@ -7,134 +7,116 @@ const Payment = require('../models/Payment');
 // Servisler
 const IyzicoService = require('../services/iyzico');
 const StripeService = require('../services/stripe');
+const { checkTransactionRisk } = require('../services/fraud');
 
-// GÜVENLİK KİLİDİ
+// Middleware
 const apiKeyAuth = require('../middleware/apiKeyAuth');
+const { validatePayment } = require('../middleware/validator');
+const { paymentLimiter } = require('../middleware/rateLimiter');
 
-// Webhook Tetikleme Yardımcısı
+// Utils - 🔥 BURASI DÜZELTİLDİ (maskData eklendi)
+const { logInfo, logError, maskData } = require('../utils/logger');
+
+// Webhook Helper
 async function triggerWebhook(url, data) {
     if (!url) return;
     try {
-        console.log(`🔔 Webhook Gönderiliyor -> ${url}`);
+        logInfo(`🔔 Webhook Gönderiliyor -> ${url}`);
         fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
-        }).catch(err => console.error('❌ Webhook Gönderim Hatası:', err.message));
+        }).catch(err => logError('Webhook Gönderim Hatası', err.message));
     } catch (error) {
-        console.error('❌ Webhook Genel Hata:', error);
+        logError('Webhook Genel Hata', error);
     }
 }
 
 // ============================================================
-// 🔒 PRIVATE ROUTES (API Key Gerektirir)
+// 🔒 PRIVATE ROUTES
 // ============================================================
 
 // 1. Ödeme Oluştur
-router.post('/create', apiKeyAuth, async (req, res) => {
+router.post('/create', apiKeyAuth, paymentLimiter, validatePayment, async (req, res) => {
     try {
-        // 'currency' bilgisini body'den alıyoruz (Varsayılan: TRY)
-        const { amount, currency = 'TRY', description, customerInfo, webhookUrl, returnUrl, provider = 'mock' } = req.body;
+        const { amount, currency, description, customerInfo, webhookUrl, returnUrl, provider } = req.body;
 
-        if (!amount || amount <= 0) {
-            return res.status(400).json({ success: false, error: { message: 'Geçersiz tutar' } });
+        // 1. FRAUD KONTROLÜ
+        try {
+            checkTransactionRisk({ amount, description, customerInfo });
+        } catch (fraudError) {
+            logError(`🚨 FRAUD ENGELİ: ${fraudError.message}`, { customer: customerInfo.email, amount });
+            return res.status(403).json({ 
+                success: false, 
+                error: { code: 'SECURITY_VIOLATION', message: fraudError.message } 
+            });
         }
 
         const paymentId = 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-        
-        const protocol = req.headers['x-forwarded-proto'] || req.protocol; 
-        const host = req.get('host');
-        const baseUrl = `${protocol}://${host}`;
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
         
         let paymentUrl = '';
         let providerData = '';
 
-        // --- IYZICO ---
         if (provider === 'iyzico') {
-            console.log(`🔵 Iyzico Başlatılıyor (${amount} ${currency})...`);
+            logInfo(`🔵 Iyzico Başlatılıyor`, { amount, currency, customerInfo });
             try {
                 const iyzicoResult = await IyzicoService.initializePayment({
-                    paymentId,
-                    amount,
-                    currency, // Iyzico'ya iletiyoruz (Genelde TRY çalışır)
-                    description: description || 'Genel Ödeme',
-                    customerInfo: customerInfo || { name: 'Misafir', email: 'guest@example.com' },
-                    ip: req.ip,
-                    baseUrl
+                    paymentId, amount, currency, description, customerInfo, ip: req.ip, baseUrl
                 });
-
-                if (iyzicoResult.status !== 'success') {
-                    throw new Error(iyzicoResult.errorMessage || 'Iyzico başlatılamadı');
-                }
+                if (iyzicoResult.status !== 'success') throw new Error(iyzicoResult.errorMessage);
                 providerData = iyzicoResult.checkoutFormContent;
                 paymentUrl = `${baseUrl}/api/payments/render/${paymentId}`; 
             } catch (err) {
-                console.error('Iyzico Hatası:', err);
-                return res.status(500).json({ success: false, error: { message: 'Iyzico Hatası: ' + err.message } });
+                logError('Iyzico Hatası', err.message);
+                return res.status(500).json({ success: false, error: { message: err.message } });
             }
         } 
-        // --- STRIPE ---
         else if (provider === 'stripe') {
-            console.log(`🟢 Stripe Başlatılıyor (${amount} ${currency})...`);
+            logInfo(`🟢 Stripe Başlatılıyor`, { amount, currency, customerInfo });
             try {
                 const session = await StripeService.createCheckoutSession({
-                    paymentId,
-                    amount,
-                    currency, // 🔥 ÖNEMLİ: Seçilen para birimini servise gönderdik
-                    description: description || 'Stripe Ödemesi',
-                    customerInfo: customerInfo || { name: 'Misafir', email: 'guest@example.com' },
-                    baseUrl
+                    paymentId, amount, currency, description, customerInfo, baseUrl
                 });
-
                 paymentUrl = session.url; 
                 providerData = session.id;
             } catch (err) {
-                console.error('Stripe Hatası:', err);
-                return res.status(500).json({ success: false, error: { message: 'Stripe Hatası: ' + err.message } });
+                logError('Stripe Hatası', err.message);
+                return res.status(500).json({ success: false, error: { message: err.message } });
             }
         }
-        // --- MOCK ---
         else {
             paymentUrl = `${baseUrl}/pay/${paymentId}`;
         }
 
-        // DB KAYIT
         const newPayment = await Payment.create({
-            paymentId,
-            amount,
-            currency, // DB'ye de doğru para birimini kaydedelim
-            description,
-            customerInfo,
-            webhookUrl,
-            returnUrl,
-            status: 'pending',
-            provider,
-            providerData
+            paymentId, amount, currency, description, customerInfo, webhookUrl, returnUrl,
+            status: 'pending', provider, providerData
         });
 
-        console.log(`✅ Yeni Ödeme: ${paymentId} (${provider}) - ${amount} ${currency}`);
+        logInfo(`✅ Ödeme Oluşturuldu: ${paymentId} (${provider})`);
 
         res.status(201).json({
             success: true,
-            data: {
-                paymentId: newPayment.paymentId,
-                paymentUrl,
-                status: newPayment.status
-            }
+            data: { paymentId: newPayment.paymentId, paymentUrl, status: newPayment.status }
         });
 
     } catch (error) {
-        console.error('Create Error:', error);
+        logError('Create Error', error.message);
         res.status(500).json({ success: false, error: { message: error.message } });
     }
 });
 
-// 2. Geçmiş İşlemleri Listele
+// 2. Liste (Privacy Masking)
 router.get('/', apiKeyAuth, async (req, res) => {
     try {
-        const list = await Payment.find().sort({ createdAt: -1 }).limit(50);
-        res.json({ success: true, data: list });
+        const rawList = await Payment.find().sort({ createdAt: -1 }).limit(50);
+        // Maskeleme fonksiyonunu kullan
+        const maskedList = rawList.map(p => maskData(p.toObject()));
+        res.json({ success: true, data: maskedList });
     } catch (error) {
+        // Hata detayını terminale bas ki görelim
+        console.error(error);
         res.status(500).json({ success: false, error: { message: 'Liste alınamadı' } });
     }
 });
@@ -149,39 +131,22 @@ router.get('/:id/status', async (req, res) => {
         const payment = await Payment.findOne({ paymentId: req.params.id });
         if (!payment) return res.status(404).json({ success: false, error: { code: 'NOT_FOUND' } });
         
-        res.json({
-            success: true,
-            data: {
-                paymentId: payment.paymentId,
-                status: payment.status,
-                amount: payment.amount,
-                currency: payment.currency,
-                provider: payment.provider
-            }
-        });
+        // Tekil veriyi de maskele
+        const masked = maskData(payment.toObject());
+        res.json({ success: true, data: { ...masked } });
     } catch (error) {
         res.status(500).json({ success: false, error: { message: 'Sorgu hatası' } });
     }
 });
 
-// 4. Iyzico Render
+// 4. Render
 router.get('/render/:id', async (req, res) => {
     try {
         const payment = await Payment.findOne({ paymentId: req.params.id });
-        if (!payment || !payment.providerData) return res.send('<h2>Hata: Ödeme formu bulunamadı.</h2>');
-        if (payment.status === 'paid') return res.send('<h2>Bu ödeme zaten tamamlanmış.</h2>');
-
-        const html = `
-            <!DOCTYPE html>
-            <html>
-            <head><title>Güvenli Ödeme</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-            <body><div id="iyzipay-checkout-form" class="responsive"></div>${payment.providerData}</body>
-            </html>
-        `;
-        res.send(html);
-    } catch (error) {
-        res.status(500).send('Render hatası');
-    }
+        if (!payment || !payment.providerData) return res.send('<h2>Hata: Form bulunamadı.</h2>');
+        if (payment.status === 'paid') return res.send('<h2>Ödeme zaten tamamlandı.</h2>');
+        res.send(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body><div id="iyzipay-checkout-form" class="responsive"></div>${payment.providerData}</body></html>`);
+    } catch (error) { res.status(500).send('Render hatası'); }
 });
 
 // 5. Iyzico Callback
@@ -190,13 +155,13 @@ router.post('/iyzico/callback', async (req, res) => {
         const token = req.body.token;
         if (!token) return res.redirect('/demo?status=failed');
         const result = await IyzicoService.retrievePaymentResult(token);
-        const paymentId = result.basketId; 
-        const payment = await Payment.findOne({ paymentId: paymentId });
+        const payment = await Payment.findOne({ paymentId: result.basketId });
         if (!payment) return res.redirect('/demo?status=failed');
 
         if (result.paymentStatus === 'SUCCESS') {
+            logInfo(`✅ Iyzico Ödeme Başarılı: ${payment.paymentId}`);
             payment.status = 'paid';
-            if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: 'paid', amount: payment.amount, currency: payment.currency, provider: 'iyzico' });
+            if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: 'paid' });
         } else {
             payment.status = 'failed';
         }
@@ -204,7 +169,7 @@ router.post('/iyzico/callback', async (req, res) => {
         const redirectUrl = payment.returnUrl || '/demo';
         res.redirect(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}status=${payment.status === 'paid' ? 'success' : 'failed'}`);
     } catch (error) {
-        console.error('Iyzico Callback Error:', error);
+        logError('Iyzico Callback Error', error.message);
         res.redirect('/demo?status=failed');
     }
 });
@@ -213,12 +178,9 @@ router.post('/iyzico/callback', async (req, res) => {
 router.get('/stripe/callback', async (req, res) => {
     const { session_id, cancel } = req.query;
     if (!session_id) return res.redirect('/demo?status=failed');
-
     try {
         const session = await StripeService.retrieveSession(session_id);
-        const paymentId = session.metadata.paymentId;
-        const payment = await Payment.findOne({ paymentId });
-
+        const payment = await Payment.findOne({ paymentId: session.metadata.paymentId });
         if (!payment) return res.redirect('/demo?status=failed');
 
         if (cancel === 'true') {
@@ -226,17 +188,16 @@ router.get('/stripe/callback', async (req, res) => {
              await payment.save();
              return res.redirect('/demo?status=failed');
         }
-
         if (session.payment_status === 'paid') {
+            logInfo(`✅ Stripe Ödeme Başarılı: ${payment.paymentId}`);
             payment.status = 'paid';
-            if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: 'paid', amount: payment.amount, currency: payment.currency, provider: 'stripe' });
+            if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: 'paid' });
         }
         await payment.save();
         const redirectUrl = payment.returnUrl || '/demo';
         res.redirect(`${redirectUrl}${redirectUrl.includes('?') ? '&' : '?'}status=${payment.status === 'paid' ? 'success' : 'failed'}`);
-
     } catch (error) {
-        console.error('Stripe Callback Error:', error);
+        logError('Stripe Callback Error', error.message);
         res.redirect('/demo?status=failed');
     }
 });
@@ -245,14 +206,12 @@ router.get('/stripe/callback', async (req, res) => {
 router.post('/:id/complete', async (req, res) => {
     try {
         const payment = await Payment.findOne({ paymentId: req.params.id });
-        if (!payment) return res.status(404).json({ success: false, message: 'Bulunamadı' });
+        if (!payment) return res.status(404).json({ success: false });
         payment.status = req.body.success ? 'paid' : 'failed';
         await payment.save();
-        if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: payment.status, amount: payment.amount, currency: payment.currency, provider: 'mock' });
+        if (payment.webhookUrl) triggerWebhook(payment.webhookUrl, { event: 'payment.completed', paymentId: payment.paymentId, status: payment.status });
         res.json({ success: true, returnUrl: payment.returnUrl || '/' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 module.exports = router;
