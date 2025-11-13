@@ -1,4 +1,4 @@
-// src/index.js - AUTH SİSTEMLİ FİNAL
+// src/index.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -11,7 +11,9 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./middleware/rateLimiter');
 const securityHeaders = require('./middleware/securityHeaders');
-const apiKeyAuth = require('./middleware/apiKeyAuth'); // YENİ: Güvenlik kilidimiz
+
+// DİKKAT: apiKeyAuth'ı burada import etmene gerek yok, routes dosyasında kullanıyoruz.
+// const apiKeyAuth = require('./middleware/apiKeyAuth'); <--- BU SATIRI SİL VEYA YORUMA AL
 
 // Veritabanına Bağlan
 connectDB();
@@ -24,9 +26,9 @@ const PORT = process.env.PORT || 3000;
 app.use(securityHeaders);
 
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-api-key"] // YENİ: x-api-key'e izin ver
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-api-key"]
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -34,46 +36,47 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(rateLimiter);
 
-// ==================== STATİK DOSYALAR (CACHE KAPALI) ====================
+// ==================== STATİK DOSYALAR ====================
 
 app.use(express.static(path.join(__dirname, '../public'), {
-  maxAge: '0',
-  etag: false
+    maxAge: '0',
+    etag: false
 }));
 
 // ==================== LOGLAMA ====================
 
 app.use((req, res, next) => {
-  console.log(`📍 ${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
+    console.log(`📍 [${new Date().toLocaleTimeString()}] ${req.method} ${req.path}`);
+    next();
 });
 
 // ==================== ROTALAR ====================
 
-// 1. Auth (Kayıt/Giriş) - HERKESE AÇIK
+// 1. Auth (Kayıt/Giriş)
 app.use('/api/auth', require('./routes/auth'));
 
-// 2. Payment API - ARTIK KORUMALI!
-// Bu rotaya gelen isteklerde "x-api-key" header'ı olmak zorunda.
-app.use('/api/payments', apiKeyAuth, require('./routes/payment'));
+// 2. Payment API
+// KRİTİK NOKTA BURASI: Burada 'apiKeyAuth' YOK! 
+// Sadece require('./routes/payment') var.
+app.use('/api/payments', require('./routes/payment'));
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy' });
+    res.json({ status: 'healthy' });
 });
 
-// Demo sayfaları (Mock ve Iyzico Render)
+// Checkout Sayfaları
 app.get('/pay/:id', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/checkout.html'));
+    res.sendFile(path.join(__dirname, '../public/checkout.html'));
 });
 
 // Ana sayfa
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+    res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.use(errorHandler);
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Payment API: http://localhost:${PORT}`);
+    console.log(`🚀 PayMint API Çalışıyor: http://localhost:${PORT}`);
 });
