@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PaymentAPI - Developer Dashboard</title>
+    <title>PayMint API - Developer Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,9 +19,7 @@
             --error: #ef4444;
             --radius: 16px;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-gradient);
@@ -32,7 +30,6 @@
             justify-content: center;
             align-items: flex-start;
         }
-
         .container {
             width: 100%;
             max-width: 950px;
@@ -42,8 +39,6 @@
             align-items: start;
             margin-top: 2vh;
         }
-
-        /* SOL PANEL */
         .main-card {
             background: var(--card-bg);
             border-radius: var(--radius);
@@ -55,75 +50,64 @@
             flex-direction: column;
             position: relative;
         }
-
         .header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .brand h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
         .brand span { color: var(--primary); }
         .brand p { font-size: 0.85rem; color: var(--text-light); margin-top: 4px; }
-
         .lang-switch { background: #f1f5f9; padding: 4px; border-radius: 8px; display: flex; }
         .lang-btn { border: none; background: none; padding: 6px 12px; font-size: 0.75rem; font-weight: 600; color: var(--text-light); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .lang-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
         .tabs { display: flex; gap: 15px; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; overflow-x: auto; flex-shrink: 0; }
         .tab { background: none; border: none; padding: 8px 10px; color: var(--text-light); font-weight: 500; cursor: pointer; position: relative; transition: 0.3s; white-space: nowrap; font-size: 0.95rem;}
         .tab.active { color: var(--primary); font-weight: 600; }
         .tab.active::after { content: ''; position: absolute; bottom: -12px; left: 0; width: 100%; height: 2px; background: var(--primary); }
-
-        /* İÇERİK ALANI */
         .content-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
         .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
-
-        /* FORM ELEMANLARI */
         .form-group { margin-bottom: 18px; }
         label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px; }
         input, select { width: 100%; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; transition: all 0.2s; font-family: 'Inter', sans-serif; background: white; }
         input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
-        
         .input-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 6px; }
-
         button.btn-primary { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; margin-top: 10px; }
         button.btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-
-        /* SAĞ PANEL */
         .side-panel { display: flex; flex-direction: column; gap: 25px; position: sticky; top: 20px; }
         .credit-card { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border-radius: var(--radius); padding: 25px; color: white; position: relative; overflow: hidden; box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3); aspect-ratio: 1.58/1; }
         .card-chip { width: 40px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .card-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 20px; }
         .card-info { display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
         .card-name { font-weight: 600; }
-
         .api-log { background: #0f172a; border-radius: var(--radius); padding: 20px; color: #22d3ee; font-family: 'Courier New', monospace; font-size: 0.8rem; height: 280px; overflow-y: auto; border: 1px solid #334155; }
         .log-entry { margin-bottom: 10px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
         .log-success { color: var(--success); }
         .log-error { color: var(--error); }
         .log-label { color: #94a3b8; font-size: 0.7rem; display: block; margin-bottom: 2px; }
-
-        /* TABLO */
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; color: #64748b; font-size: 0.85rem; border-bottom: 2px solid #e2e8f0; padding: 10px;}
         td { padding: 16px 10px; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; color: var(--text-main); }
         tr:hover td { background-color: #f8fafc; color: var(--primary-dark); }
-
-        /* TOAST */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 50px; padding: 16px 24px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.95rem; box-shadow: 0 15px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500;
-        }
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 50px; padding: 16px 24px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.95rem; box-shadow: 0 15px 30px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 500; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-        
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
         .copy-btn { background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; color: var(--text-light); float: right; }
         .copy-btn:hover { background: #e2e8f0; color: var(--primary); }
-
-        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* YENİ: AUTH EKRANI STİLLERİ */
+        #authContainer { width: 100%; max-width: 400px; margin: 10vh auto 0; }
+        .auth-card { background: var(--card-bg); padding: 35px; border-radius: var(--radius); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3); }
+        .auth-toggle { display: flex; background: #f1f5f9; border-radius: 10px; padding: 5px; margin-bottom: 25px; }
+        .auth-toggle button { flex: 1; padding: 10px; border: none; border-radius: 8px; background: none; font-weight: 600; font-size: 0.9rem; color: var(--text-light); cursor: pointer; }
+        .auth-toggle button.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #authContainer .form-group { margin-bottom: 15px; }
+        #authContainer button.btn-primary { margin-top: 5px; }
+        .auth-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-top: 15px; display: none; }
+        .auth-success { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; padding: 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; margin-top: 15px; display: none; }
 
         @media (max-width: 768px) {
             .container { grid-template-columns: 1fr; }
@@ -133,14 +117,57 @@
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <!-- YENİ: AUTH EKRANI (Giriş / Kayıt) -->
+    <div id="authContainer" style="display: none;"> <!-- Başlangıçta gizli, JS kontrol edecek -->
+        <div class="brand" style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: white; font-size: 2rem;">PayMint<span>API</span></h1>
+            <p style="color: #94a3b8;">Geliştirici Paneline Hoş Geldiniz</p>
+        </div>
+        <div class="auth-card">
+            <div class="auth-toggle">
+                <button id="authTabLogin" class="active" onclick="toggleAuthTab('login')">Giriş Yap</button>
+                <button id="authTabRegister" onclick="toggleAuthTab('register')">Kayıt Ol</button>
+            </div>
+
+            <!-- GİRİŞ FORMU -->
+            <form id="loginForm" style="display: block;">
+                <div class="form-group">
+                    <label>E-Mail</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">Giriş Yap</button>
+                <div id="loginError" class="auth-error">Hata mesajı</div>
+            </form>
+
+            <!-- KAYIT FORMU -->
+            <form id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label>E-Mail</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="registerPassword" required>
+                </div>
+                <button type="submit" class="btn-primary">Kayıt Ol</button>
+                <div id="registerSuccess" class="auth-success">Kayıt başarılı! Giriş yapabilirsiniz.</div>
+                <div id="registerError" class="auth-error">Hata mesajı</div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- GÖVDE: DASHBOARD EKRANI (Bizim yaptığımız ana panel) -->
+    <div class="container" id="dashboardContainer" style="display: none;"> <!-- Başlangıçta gizli -->
         <div class="main-card">
             <div class="header">
-                <div class="brand"><h1>Payment<span>API</span></h1><p>Developer Dashboard</p></div>
-                <div class="language-switcher lang-switch">
-                    <button class="lang-btn active" data-lang="tr">TR</button>
-                    <button class="lang-btn" data-lang="en">EN</button>
-                </div>
+                <div class="brand"><h1>Payment<span>API</span></h1><p id="userEmailDisplay">Developer Dashboard</p></div>
+                <!-- ÇIKIŞ YAP BUTONU -->
+                <button id="logoutButton" style="background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer;">Çıkış Yap</button>
             </div>
 
             <div class="tabs">
@@ -150,42 +177,49 @@
             </div>
 
             <div class="content-wrapper">
+                <!-- API KEY GÖSTERME ALANI -->
+                <div class="form-group" style="position:relative; background: #f1f5f9; padding: 15px; border-radius: 10px; margin-bottom: 25px;">
+                    <label style="font-size: 0.8rem; color: var(--text-light);">API SECRET KEY</label>
+                    <input type="text" id="apiKeyDisplay" readonly style="font-family: monospace; background: transparent; border: none; padding: 8px 0;">
+                    <button type="button" class="copy-btn" style="position:absolute; right:15px; top:30px;" onclick="copyToClipboard('apiKeyDisplay')">Kopyala</button>
+                </div>
+
+                <!-- ÖDEME FORMU -->
                 <div id="paymentTab" class="tab-content active">
                     <form id="paymentForm">
                         <div class="form-group">
-                            <label data-tr="Tutar (TRY)" data-en="Amount (TRY)">Tutar (TRY)</label>
+                            <label data-tr="Tutar" data-en="Amount">Tutar</label>
                             <input type="text" id="amount" name="amount" placeholder="150,00" inputmode="decimal" required oninput="formatAmountInput(this)">
+                        </div>
+                        <div class="form-group">
+                            <label>Ödeme Altyapısı (Provider)</label>
+                            <select name="provider" id="provider">
+                                <option value="mock">🟣 Simülasyon (Mock)</option>
+                                <option value="iyzico">🔵 Iyzico (Sandbox - TRY)</option>
+                                <option value="stripe">🟢 Stripe (Test - USD)</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label data-tr="Açıklama" data-en="Description">Açıklama</label>
                             <input type="text" id="description" name="description" placeholder="Premium Üyelik" required>
                         </div>
-                        
-                        <div class="form-group">
-                            <label>Ödeme Altyapısı (Provider)</label>
-                            <select name="provider" id="provider">
-                                <option value="mock">🟣 Simülasyon (Mock)</option>
-                                <option value="iyzico">🔵 Iyzico (Sandbox)</option>
-                            </select>
-                            <div class="input-hint">Hangi pos altyapısını test etmek istersiniz?</div>
-                        </div>
-
                         <div class="form-group">
                             <label>Webhook URL <span style="font-weight:400; color:#94a3b8">(Opsiyonel)</span></label>
                             <input type="url" id="webhookUrl" name="webhookUrl" placeholder="https://app.bubble.io/api/1.1/wf/payment_success">
                         </div>
                         <div class="form-group">
-                            <label data-tr="Kart Sahibi" data-en="Card Holder">Kart Sahibi</label>
+                            <label data-tr="Müşteri Adı" data-en="Customer Name">Müşteri Adı</label>
                             <input type="text" id="customerName" name="customerName" placeholder="Ahmet Yılmaz" required onkeyup="updateCardPreview(this.value)">
                         </div>
                         <div class="form-group">
-                            <label>E-Mail</label>
+                            <label>Müşteri E-Mail</label>
                             <input type="email" id="customerEmail" name="customerEmail" placeholder="ahmet@example.com" required>
                         </div>
                         <button type="submit" class="btn-primary" data-tr="Ödeme Linki Oluştur" data-en="Create Payment Link">Ödeme Linki Oluştur</button>
                     </form>
                 </div>
 
+                <!-- SORGULAMA TABI -->
                 <div id="statusTab" class="tab-content">
                     <div class="form-group" style="position:relative;">
                         <label>Payment ID</label>
@@ -195,18 +229,20 @@
                     <button class="btn-primary" onclick="checkPaymentStatus()" data-tr="Durumu Kontrol Et" data-en="Check Status">Durumu Kontrol Et</button>
                 </div>
 
+                <!-- GEÇMİŞ TABI -->
                 <div id="historyTab" class="tab-content">
                     <table style="width: 100%;">
                         <thead>
                             <tr>
                                 <th style="width: 120px;">ID</th>
                                 <th>Tutar</th>
-                                <th>Altyapı</th> <th>Durum</th>
+                                <th>Altyapı</th>
+                                <th>Durum</th>
                                 <th>Tarih</th>
                             </tr>
                         </thead>
                         <tbody id="historyList">
-                            <tr><td colspan="5" style="padding:20px; text-align:center;">Yükleniyor...</td></tr>
+                            <!-- JS ile dolacak -->
                         </tbody>
                     </table>
                     <br>
@@ -215,6 +251,7 @@
             </div>
         </div>
 
+        <!-- SAĞ PANEL -->
         <div class="side-panel">
             <div class="credit-card">
                 <div class="card-chip"></div>
@@ -231,7 +268,6 @@
     </div>
 
     <div id="toast">Mesaj buraya gelecek</div>
-
     <script src="/demo.js"></script>
 </body>
 </html>
